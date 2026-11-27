@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clipear</title>
+<style>
+  :root { --bg:#f2f1ee; --card:#ffffff; --card2:#f7f6f3; --text:#17181a; --muted:#6a6e75; --line:#dddbd5; --accent:#d9431f; --accent-ink:#fff; --ok:#2e8b57; --bad:#c0392b; color-scheme: light dark; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0e0f11; --card:#16181b; --card2:#1d2024; --text:#e8e9eb; --muted:#8d9299; --line:#2a2d32; --accent:#f0562d; --ok:#4fb783; --bad:#ef6b5b; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 ui-sans-serif, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+  main { max-width:1280px; margin:0 auto; padding:0 20px 64px; }
+  h1 { margin:0; font-size:19px; font-weight:700; letter-spacing:-.01em; } h2 { margin:0 0 14px; font-size:15px; font-weight:650; letter-spacing:-.005em; } .sub { color:var(--muted); margin:0; font-size:13px; }
+  h3 { margin:0 0 8px; font-size:12px; font-weight:650; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px; margin-bottom:16px; scroll-margin-top:72px; }
+  .row { display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin-bottom:12px; }
+  label { display:flex; flex-direction:column; gap:5px; font-size:12px; font-weight:500; color:var(--muted); }
+  input, select, button { font:inherit; padding:7px 10px; border-radius:7px; border:1px solid var(--line); background:var(--card2); color:var(--text); transition:border-color .12s, background .12s; }
+  input:hover, select:hover { border-color:color-mix(in srgb, var(--muted) 55%, var(--line)); }
+  input:focus-visible, select:focus-visible, button:focus-visible, textarea:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  select { appearance:none; padding-right:28px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%238d9299' stroke-width='1.5'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; }
+  input[type=checkbox] { accent-color:var(--accent); width:15px; height:15px; padding:0; vertical-align:-3px; margin-right:4px; }
+  input[type=color] { padding:2px; height:34px; width:48px; } input[type=range] { padding:0; accent-color:var(--accent); background:none; border:0; }
+  input[type=text], input[type=password] { min-width:140px; } .grow { flex:1; min-width:240px; }
+  button { cursor:pointer; font-weight:550; } button:hover:not(:disabled) { border-color:var(--muted); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:650; } button.primary:hover:not(:disabled) { filter:brightness(1.08); border-color:var(--accent); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .msg { color:var(--muted); font-size:13px; margin-top:6px; } .err { color:var(--bad); }
+  textarea { font:inherit; padding:8px 10px; border-radius:7px; border:1px solid var(--line); background:var(--card2); color:var(--text); resize:vertical; width:100%; }
+  .small { color:var(--muted); font-size:12px; line-height:1.45; }
+  .pill { background:var(--accent); color:#fff; border-radius:99px; padding:1px 8px; font-size:11.5px; font-weight:600; white-space:nowrap; }
+  hr { border:0; border-top:1px solid var(--line); margin:14px 0; }
+  .badge { display:inline-block; font-size:11px; font-weight:600; color:var(--muted); border:1px solid var(--line); border-radius:99px; padding:0 8px; margin-left:6px; vertical-align:middle; }
+
+  /* barra superior */
+  .top { position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:20px; flex-wrap:wrap; margin:0 -20px 20px; padding:12px 20px; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  .brand { display:flex; align-items:baseline; gap:12px; flex:1; min-width:220px; }
+  .brand .sub { display:none; } @media (min-width:900px) { .brand .sub { display:block; } }
+  .steps { display:flex; gap:2px; margin:0; padding:3px; background:var(--card); border:1px solid var(--line); border-radius:9px; }
+  .steps a { text-decoration:none; color:var(--muted); border-radius:6px; padding:5px 14px; font-size:13px; font-weight:550; }
+  .steps a:hover { color:var(--text); }
+  .steps a.on { color:var(--accent-ink); background:var(--accent); font-weight:650; }
+  .steps a.done { color:var(--ok); }
+
+  .tm { width:112px; text-align:center; font-variant-numeric:tabular-nums; letter-spacing:.5px; }
+
+  /* editor */
+  .ed { display:grid; grid-template-columns:290px 300px minmax(0,1fr); gap:20px; align-items:start; }
+  .listWrap { position:sticky; top:72px; display:flex; flex-direction:column; max-height:calc(100vh - 88px); border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--card2); }
+  .listHead { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid var(--line); font-size:13px; font-weight:600; background:var(--card); }
+  .listHead a { color:var(--accent); cursor:pointer; font-size:12px; font-weight:550; margin-left:10px; }
+  #cands { overflow:auto; flex:1; padding:8px; min-height:120px; }
+  .cc { display:flex; gap:8px; align-items:flex-start; border:1px solid var(--line); background:var(--card); border-radius:8px; padding:9px; margin-bottom:6px; cursor:pointer; }
+  .cc:hover { border-color:var(--muted); }
+  .cc.on { border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }
+  .cc input[type=checkbox] { margin-top:4px; }
+  .cc .ccb { flex:1; min-width:0; } .cc .ccb b { display:block; font-size:13px; line-height:1.3; }
+  .cc.off { opacity:.5; }
+  .genBar { border-top:1px solid var(--line); padding:10px; background:var(--card); }
+  .genBar button.primary { width:100%; padding:10px; }
+  .pvCol { position:sticky; top:72px; }
+  .pvFrame { position:relative; background:#000; border:1px solid var(--line); border-radius:10px; overflow:hidden; min-height:150px; }
+  .pvFrame img, .pvFrame video { display:block; width:100%; }
+  .pvFrame video { cursor:pointer; }
+  .pvFrame .pvmsg { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:18px; color:#d7d9dc; font-size:13px; background:rgba(0,0,0,.6); }
+  .pvPlay { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:none; align-items:center; gap:8px; padding:10px 18px 10px 14px; border-radius:99px; border:0; background:var(--accent); color:#fff; font-weight:650; box-shadow:0 6px 24px rgba(0,0,0,.45); }
+  .pvPlay svg { width:16px; height:16px; fill:currentColor; } .pvPlay:hover:not(:disabled) { filter:brightness(1.1); }
+  .pvPlay.show { display:inline-flex; } .outs .pvPlay { padding:8px 14px 8px 10px; font-size:12.5px; } .outs .pvFrame { min-height:0; }
+  .pvBar { position:absolute; left:0; right:0; bottom:0; display:none; align-items:center; gap:6px; padding:18px 8px 8px; background:linear-gradient(transparent, rgba(0,0,0,.75)); color:#fff; }
+  .pvBar.show { display:flex; opacity:0; transition:opacity .15s; } .pvFrame:hover .pvBar.show, .pvBar.show:focus-within { opacity:1; } @media (hover:none) { .pvBar.show { opacity:1; } }
+  .pvBar button { background:none; border:0; color:#fff; padding:4px; display:flex; opacity:.9; } .pvBar button:hover { opacity:1; border:0 !important; }
+  .pvBar svg { width:18px; height:18px; fill:currentColor; }
+  .pvBar input[type=range] { flex:1; min-width:0; height:4px; }
+  /* volumen: cerrado no ocupa nada (la barra de avance usa todo el espacio); se abre al apuntar al botón de sonido */
+  .pvBar input[type=range].vol { flex:0 0 0; width:0; min-width:0; opacity:0; margin:0; pointer-events:none; transition:width .18s ease, opacity .18s ease; }
+  .pvBar #pvMute, .pvBar .b-mute { position:relative; } .pvBar #pvMute::after, .pvBar .b-mute::after { content:""; position:absolute; left:100%; top:0; bottom:0; width:10px; }
+  .pvBar #pvMute:hover + input[type=range].vol, .pvBar .b-mute:hover + input[type=range].vol, .pvBar input[type=range].vol:hover, .pvBar input[type=range].vol:active, .pvBar input[type=range].vol:focus-visible { flex:0 0 64px; width:64px; opacity:1; pointer-events:auto; margin-left:4px; }
+  .pvFrame:fullscreen .pvBar { padding:36px 24px 18px; gap:14px; } .pvFrame:fullscreen .pvBar svg { width:26px; height:26px; } .pvFrame:fullscreen .pvBar .clock { font-size:14px; min-width:44px; }
+  .pvFrame:fullscreen .pvBar input[type=range] { height:6px; } .pvFrame:fullscreen .pvPlay { padding:14px 26px 14px 20px; font-size:16px; } .pvFrame:fullscreen .pvPlay svg { width:22px; height:22px; }
+  .pvFrame:fullscreen .pvBar input[type=range].vol:hover, .pvFrame:fullscreen .pvBar #pvMute:hover + input[type=range].vol, .pvFrame:fullscreen .pvBar .b-mute:hover + input[type=range].vol { flex:0 0 96px; width:96px; } .pvBar .clock { font-size:11.5px; font-variant-numeric:tabular-nums; min-width:34px; text-align:right; }
+  .pvFrame:fullscreen { display:flex; align-items:center; justify-content:center; border:0; border-radius:0; } .pvFrame:fullscreen video { width:auto; height:100%; max-width:100%; }
+  .pvCol input[type=range] { width:100%; }
+  details.vid { margin-top:12px; } details.vid summary { cursor:pointer; font-size:12.5px; color:var(--muted); }
+  #prev { width:100%; max-height:300px; background:#000; border-radius:8px; margin-top:6px; }
+  .tabs { display:flex; gap:2px; flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:16px; }
+  .tab { border:0; border-bottom:2px solid transparent; border-radius:0; background:none; padding:9px 14px; color:var(--muted); font-weight:600; margin-bottom:-1px; }
+  .tab:hover:not(.on) { color:var(--text); border-bottom-color:var(--line) !important; }
+  .tab.on { color:var(--text); border-bottom-color:var(--accent); }
+  .pane { display:none; } .pane.on { display:block; }
+  .tline { display:flex; gap:4px; align-items:center; }
+  .tline button { padding:6px 8px; font-size:12.5px; }
+  .tgroup { margin-bottom:12px; }
+  .tgroup > .lbl { font-size:12px; color:var(--muted); margin-bottom:3px; }
+  .secH { font-size:12px; font-weight:650; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:6px 0 10px; }
+
+  .subEdList { max-height:320px; overflow:auto; border:1px solid var(--line); border-radius:8px; padding:8px; margin-top:6px; display:flex; flex-direction:column; gap:6px; background:var(--card2); }
+  .subRow { display:flex; gap:6px; align-items:center; }
+  .subRow button.subT { font-size:12px; padding:4px 8px; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .subRow button.subT:hover { border-color:var(--accent); color:var(--text); }
+  .subRow input { flex:1; padding:5px 8px; font-size:13px; }
+
+  .logos { display:flex; gap:10px; flex-wrap:wrap; margin:8px 0 12px; }
+  .lg { position:relative; width:68px; height:68px; border:1px solid var(--line); border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; background:repeating-conic-gradient(#8883 0 25%, transparent 0 50%) 50% / 14px 14px; }
+  .lg.sel { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent); }
+  .lg img { max-width:100%; max-height:100%; object-fit:contain; }
+  .lg .x { position:absolute; top:-9px; right:-9px; width:22px; height:22px; padding:0; border-radius:50%; font-size:11px; line-height:1; }
+  .bar { height:6px; background:var(--line); border-radius:99px; overflow:hidden; margin:8px 0; }
+  .bar i { display:block; height:100%; background:var(--accent); transition:width .4s; }
+  .bar.ind i { width:40% !important; animation:ind 1.2s linear infinite; }
+  @keyframes ind { 0% { transform:translateX(-100%); } 100% { transform:translateX(250%); } }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .chip { font-size:12px; color:var(--muted); border:1px solid var(--line); border-radius:99px; padding:1px 10px; }
+  .chip.run { color:var(--text); border-color:var(--accent); } .chip.done { color:var(--ok); }
+  .warn { background:color-mix(in srgb, var(--bad) 14%, transparent); border:1px solid var(--bad); border-radius:8px; padding:8px 10px; margin:8px 0; font-size:13px; }
+  .cancel { margin-top:6px; }
+  .vbox { border:1px solid var(--line); background:var(--card2); border-radius:8px; padding:12px; margin:8px 0 12px; }
+  .spk { display:grid; grid-template-columns:minmax(220px,1fr) auto; gap:10px; align-items:start; margin-top:10px; }
+  .spk .fr { position:relative; cursor:crosshair; background:#000; border-radius:8px; overflow:hidden; line-height:0; }
+  .spk .fr img { width:100%; display:block; }
+  .spk .fr .mk { position:absolute; top:0; bottom:0; width:3px; background:#ffd600; box-shadow:0 0 0 1px #000; pointer-events:none; display:none; }
+  .spk .fr .mk b { position:absolute; top:6px; left:6px; background:#ffd600; color:#000; font-size:12px; padding:1px 7px; border-radius:99px; line-height:1.4; white-space:nowrap; }
+  .spk .btns { display:flex; flex-direction:column; gap:6px; }
+
+  .outs { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px,1fr)); gap:14px; }
+  .outs video { width:100%; border-radius:8px; background:#000; } .outs a { font-size:12.5px; word-break:break-all; }
+  .outs textarea { font-size:12.5px; margin-top:6px; }
+
+
+  .scope { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 14px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card2); font-size:12.5px; color:var(--muted); }
+  .seg { display:inline-flex; padding:2px; border:1px solid var(--line); border-radius:8px; background:var(--card); }
+  .seg button { border:0; background:none; padding:4px 12px; border-radius:6px; font-size:12.5px; color:var(--muted); }
+  .seg button.on { background:var(--accent); color:var(--accent-ink); }
+  .scope.own { border-color:var(--accent); }
+  #stWrap { position:relative; line-height:0; margin:8px 0; background:#000; border-radius:8px; overflow:hidden; cursor:crosshair; touch-action:none; max-width:560px; }
+  #stWrap img { width:100%; display:block; min-height:60px; }
+  .rc { position:absolute; display:none; border:2px solid #ffd600; background:rgba(255,214,0,.18); pointer-events:none; }
+  .rc.game { border-color:#3aa0ff; background:rgba(58,160,255,.16); }
+  .keyRow { display:flex; align-items:center; gap:8px; margin-bottom:6px; } .keyRow input[type=range] { flex:1; }
+  .keyRow button { padding:3px 8px; }
+  .pvFrame img.drag { cursor:ew-resize; }
+  .livebar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:0 0 14px; padding:10px 14px; border:1px solid var(--accent); border-radius:8px; background:color-mix(in srgb, var(--accent) 10%, var(--card)); font-size:13px; }
+  .livebar .dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--accent); margin-right:8px; animation:blink 1.2s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity:.25; } }
+  .cc .ccx { align-self:flex-start; border:0; background:none; color:var(--muted); padding:0 4px; font-size:14px; line-height:1; }
+  .cc .ccx:hover { color:var(--bad); border:0; }
+  @media (max-width:1120px) { .ed { grid-template-columns:270px minmax(0,1fr); } .ctlCol { grid-column:1 / -1; } }
+  @media (max-width:760px) { .ed { grid-template-columns:1fr; } .listWrap, .pvCol { position:static; max-height:none; } .spk { grid-template-columns:1fr; } }
+  #dragLayer { position:absolute; inset:0; pointer-events:none; z-index:3; }
+  .dragH { position:absolute; box-sizing:border-box; border:1.5px dashed rgba(255,255,255,.9); background:rgba(80,140,255,.13); border-radius:6px; cursor:grab; pointer-events:auto; touch-action:none; box-shadow:0 0 0 1px rgba(0,0,0,.45); opacity:.55; transition:opacity .12s; }
+  .pvFrame:hover .dragH, .dragH.on { opacity:1; } .dragH.on { cursor:grabbing; background:rgba(80,140,255,.28); }
+  .dragH i { position:absolute; left:-1px; top:-17px; font-style:normal; font-size:10.5px; line-height:15px; padding:0 6px; border-radius:4px 4px 0 0; background:rgba(20,30,50,.85); color:#fff; white-space:nowrap; }
+  .dragHint { font-size:12px; color:var(--muted); margin-top:6px; }
+  .camPick { position:relative; background:#000; border:1px solid var(--line); border-radius:8px; overflow:hidden; cursor:crosshair; line-height:0; margin:8px 0; user-select:none; }
+  .camPick img { width:100%; display:block; min-height:90px; }
+  .camPick .cbox { position:absolute; top:0; bottom:0; border:2px solid #ffd600; background:rgba(255,214,0,.18); pointer-events:none; transform:translateX(-50%); }
+  .camPick .cbox b { position:absolute; top:6px; left:6px; background:#ffd600; color:#000; font-size:11px; padding:1px 6px; border-radius:99px; line-height:1.4; white-space:nowrap; }
+  .camPick video { width:100%; display:block; min-height:90px; }
+  .tlWrap { margin:6px 0 10px; }
+  .tl { position:relative; height:48px; background:var(--card); border:1px solid var(--line); border-radius:8px; overflow:hidden; cursor:pointer; touch-action:none; user-select:none; }
+  .tlSeg { position:absolute; top:0; bottom:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:650; border-right:1px solid rgba(0,0,0,.35); opacity:.8; overflow:hidden; pointer-events:none; }
+  .tlSeg.on { opacity:1; box-shadow:inset 0 0 0 2px #fff; }
+  .tlDoubt { position:absolute; bottom:0; height:9px; background:repeating-linear-gradient(135deg,#e5392f 0 4px,#7d1612 4px 8px); pointer-events:none; z-index:1; }
+  .tlKey { position:absolute; top:0; bottom:0; width:14px; margin-left:-7px; cursor:ew-resize; z-index:2; }
+  .tlKey::after { content:''; position:absolute; left:6px; top:0; bottom:0; width:2px; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.45); }
+  .tlKey::before { content:''; position:absolute; left:2px; top:17px; width:10px; height:14px; border-radius:3px; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.55); z-index:1; }
+  .tlHead { position:absolute; top:0; bottom:0; width:2px; margin-left:-1px; background:#ff3b30; z-index:3; pointer-events:none; }
+  .tlRuler { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:3px; font-variant-numeric:tabular-nums; }
+  .pre { display:inline-flex; margin-right:6px; } .pre button { padding:4px 9px; font-size:12px; } .pre .preGo { border-radius:7px 0 0 7px; } .pre .preSet { border-radius:0 7px 7px 0; border-left:0; padding:4px 7px; }
+  .kb { display:inline-block; min-width:18px; text-align:center; padding:0 5px; border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; font-size:11px; font-weight:650; background:var(--card2); color:var(--text); }
+  .camPick .cbox.b2 { border-color:#3aa0ff; background:rgba(58,160,255,.18); }
+  .camPick .cbox.b2 b { background:#3aa0ff; color:#fff; top:auto; bottom:6px; }
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div class="brand"><h1>Clipear</h1><p class="sub">Pega el link, la IA propone los mejores momentos y tú sacas los clips listos para publicar.</p></div>
+    <nav class="steps"><a href="#s1" id="st1" class="on">1 · Video</a><a href="#s2" id="st2">2 · Editor de clips</a><a href="#s3" id="st3">3 · Clips listos</a></nav>
+  </header>
+
+  <!-- ===================== 1. VIDEO ===================== -->
+  <div class="card" id="s1">
+    <h2>1. Video y análisis</h2>
+    <div class="row">
+      <div class="seg" id="srcSeg"><button type="button" id="srcUrl" class="on">Link de internet</button><button type="button" id="srcPc">Video de mi computadora</button></div>
+    </div>
+    <div class="row" id="urlRow">
+      <label class="grow">Link del video (YouTube u otra plataforma)<input type="text" id="url" data-k placeholder="https://..."></label>
+    </div>
+    <div id="pcRow" style="display:none">
+      <div class="row">
+        <button type="button" id="pickPc">Elegir video…</button>
+        <label class="grow">Video elegido<input type="text" id="lpath" placeholder="C:\Users\tu_usuario\Videos\grabacion.mp4"></label>
+      </div>
+      <div class="small" style="margin:-4px 0 12px">Pulsa «Elegir video…» (la ventana puede abrirse detrás del navegador) o pega la ruta completa del archivo. El video no se copia ni se sube a ningún lado: se lee desde donde está. Sirve una grabación de pantalla (mp4, mkv, mov, webm…).</div>
+    </div>
+    <div class="row" id="liveChkRow">
+      <label><span><input type="checkbox" id="isLive" data-k> <b>Es un directo</b>: grabar ahora y sacar clips mientras transmite</span></label>
+    </div>
+    <div class="vbox" id="liveBox" style="display:none">
+      <div class="small" style="margin-bottom:8px">Graba la transmisión desde el link (sin recomprimirla, casi no gasta procesador) y, cada pocos minutos, transcribe lo nuevo y la IA propone clips. <b>Los clips aparecen solos en el editor mientras sigue grabando</b>: puedes descartarlos, ajustar su cámara y subtítulos, generarlos y publicarlos sin detener nada. La calidad del clip final es la de la grabación.</div>
+      <div class="row">
+        <label>Grabar
+          <select id="liveMin" data-k><option value="0" selected>Hasta que yo lo detenga</option><option value="30">30 minutos</option><option value="60">1 hora</option><option value="120">2 horas</option><option value="180">3 horas</option><option value="240">4 horas</option></select>
+        </label>
+        <label>Calidad de la grabación
+          <select id="liveQ" data-k><option value="480">480p (muy liviano)</option><option value="720">720p (liviano)</option><option value="1080" selected>1080p (estándar)</option><option value="1440">1440p (2K · más nítido al hacer zoom)</option><option value="2160">2160p (4K · máxima nitidez)</option></select>
+        </label>
+        <label>Analizar cada (min)<input type="number" id="liveBlock" data-k value="6" min="2" max="20" style="width:80px"></label>
+        <label>Clips por bloque (máx.)<input type="number" id="livePer" data-k value="2" min="1" max="6" style="width:80px"></label>
+        <label title="La IA da un puntaje de 1 a 100 a cada clip. Solo aparecen los que lo superen; si en un rato no pasa nada bueno, no sale nada.">Puntaje mínimo<input type="number" id="liveScore" data-k value="60" min="0" max="100" style="width:80px"></label>
+      </div>
+      <div class="row">
+        <button class="primary" id="liveStart" type="button">Empezar a grabar</button>
+        <button id="liveStop" type="button" disabled>Detener grabación</button>
+      </div>
+      <div class="small">Espacio aproximado: 4 a 8 GB por 2 horas en 1080p (2 a 3 GB en 720p). Si cierras la ventana de app.py o apagas la PC, la grabación se detiene (lo ya grabado y los clips encontrados quedan).</div>
+    </div>
+    <div class="row" id="rowFromTo">
+      <label>Desde (opcional)<input type="text" id="start" class="tm" data-k inputmode="numeric" placeholder="00:00:00" autocomplete="off"></label>
+      <label>Hasta (opcional)<input type="text" id="end" class="tm" data-k inputmode="numeric" placeholder="00:00:00" autocomplete="off"></label>
+      <span class="small" style="max-width:330px;padding-bottom:8px">Escribe solo números: <b>10000</b> se convierte en <b>01:00:00</b>. También puedes pegar «1:00:00». Déjalo vacío para usar todo el video.</span>
+    </div>
+    <div class="row">
+      <label>Clips a sugerir<input type="number" id="n" data-k value="5" min="1" max="20" style="width:80px"></label>
+      <label>Duración mín. (s)<input type="number" id="min" data-k value="20" style="width:80px"></label>
+      <label>Duración máx. (s)<input type="number" id="max" data-k value="60" style="width:80px"></label>
+      <label title="Con esto activado, mín. y máx. son solo una guía: la IA hace cada clip del largo que pida el tema (más corto si la idea cierra antes, más largo si hace falta)."><span><input type="checkbox" id="flex" data-k checked> Duración flexible</span></label>
+      <label title="La IA escribe un texto corto de contexto para el post de cada clip."><span><input type="checkbox" id="capTags" data-k checked> Hashtags en el caption</span></label>
+      <label>Transcripción
+        <select id="whisper" data-k><option value="small">Small (rápido, recomendado)</option><option value="medium">Medium (más preciso, más lento)</option></select>
+      </label>
+      <label id="cookBox">Cookies de YouTube
+        <select id="browser" data-k><option value="">Ninguno</option><option value="firefox">Firefox</option><option value="chrome">Chrome</option><option value="edge">Edge</option><option value="brave">Brave</option></select>
+      </label>
+    </div>
+    <div class="row">
+      <label>IA
+        <select id="ai" data-k><option value="gemini">Gemini (API gratuita)</option><option value="ollama">Ollama (local)</option></select>
+      </label>
+      <label>Modelo
+        <select id="model" data-k style="width:210px">
+          <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (rápido)</option>
+          <option value="gemini-3.8-flash">gemini-3.8-flash (más potente)</option>
+          <option value="gemini-3.6-flash">gemini-3.6-flash</option>
+        </select>
+        <input type="text" id="modelOl" data-k value="qwen2.5:7b" style="width:170px;display:none">
+      </label>
+      <label class="grow" id="keyBox">API key de Gemini<input type="password" id="key" data-k placeholder="Se guarda solo en tu navegador"></label>
+      <button class="primary" id="analyze">Analizar video</button>
+    </div>
+    <details class="vbox" id="ctxBox">
+      <summary style="cursor:pointer;font-weight:600" id="ctxSum">Contexto para la IA (opcional): el programa y sus participantes</summary>
+      <div class="small" style="margin:8px 0">Escribe de qué es el programa y quiénes son. La IA usa esto para saber de quién se habla y poner los nombres bien en los títulos y captions (también en el directo). Ejemplo: «La Casa de los Famosos RD. Participantes: María Pérez (apodada «La Jefa», pelea mucho con Juan), Juan Gómez (el cantante)…». Si la IA no está segura de quién habla, no inventa el nombre.</div>
+      <div class="row">
+        <label>Perfil guardado<select id="ctxSel" style="width:220px"><option value="">— ninguno —</option></select></label>
+        <button type="button" id="ctxSave">Guardar como perfil…</button>
+        <button type="button" id="ctxDel">Borrar perfil</button>
+      </div>
+      <textarea id="ctxText" data-k rows="7" style="width:100%;margin-top:8px" placeholder="Nombre del programa, de qué trata y la lista de participantes con una frase sobre cada uno (apodos, con quién chocan, rasgos)…"></textarea>
+      <div class="msg" id="ctxMsg"></div>
+    </details>
+    <div class="msg" id="amsg"></div>
+    <div class="small" id="engine"></div>
+    <div id="aprog"></div>
+  </div>
+
+  <!-- ===================== 2. EDITOR ===================== -->
+  <div class="card" id="candCard" style="display:none">
+    <h2 id="s2">2. Editor de clips</h2>
+    <div class="small" style="margin:-6px 0 12px">Elige un clip a la izquierda: ahí mismo ajustas su tiempo, su cámara y su caption, y ves cómo quedará. Lo marcado «Todos los clips» (subtítulos, logo, formato) se aplica igual a todos.</div>
+    <div class="small" id="timesLine" style="margin-bottom:10px"></div>
+    <div class="livebar" id="liveBar" style="display:none"><span id="liveTxt"></span><button type="button" id="liveStop2">Detener grabación</button></div>
+    <div class="ed">
+
+      <!-- lista -->
+      <div class="listWrap">
+        <div class="listHead"><b id="listCount">Clips</b><span><a id="selAll">Todos</a><a id="selNone">Ninguno</a></span></div>
+        <div id="cands"></div>
+        <div class="genBar">
+          <button class="primary" id="render" disabled>Generar clips seleccionados</button>
+          <div class="msg" id="rmsg"></div>
+          <div id="rprog"></div>
+        </div>
+      </div>
+
+      <!-- vista previa -->
+      <div class="pvCol">
+        <h3>Vista previa</h3>
+        <div class="pvFrame" id="pvFrameBox">
+          <img id="pvImg" alt="">
+          <div id="dragLayer"></div>
+          <video id="pvVid" playsinline style="display:none"></video>
+          <div class="pvmsg" id="pvMsg">Elige un clip para ver aquí cómo quedará.</div>
+          <button type="button" id="pvPlay" class="pvPlay" title="Previsualizar el clip en video (con cámara y subtítulos)"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>Previsualizar clip</button>
+          <div class="pvBar" id="pvBar">
+            <button type="button" id="pvTog" title="Reproducir / pausar"><svg viewBox="0 0 24 24"><path id="pvTogI" d="M7 4.5v15l13-7.5z"/></svg></button>
+            <input type="range" id="pvSeek" min="0" max="1000" value="0">
+            <span class="clock" id="pvClock">0:00</span>
+            <button type="button" id="pvMute" title="Sonido"><svg viewBox="0 0 24 24"><path id="pvMuteI" d="M3 9v6h4l5 4V5L7 9zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg></button>
+            <input type="range" id="pvVol" class="vol" min="0" max="100" value="100" title="Volumen">
+            <button type="button" id="pvRe" title="Volver a generar el video con los cambios"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A8 8 0 1 0 19.74 14h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/></svg></button>
+            <button type="button" id="pvFs" title="Pantalla completa"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7zm-2-4h2V7h3V5H5zm12 7h-3v2h5v-5h-2zM14 5v2h3v3h2V5z"/></svg></button>
+          </div>
+        </div>
+        <div class="dragHint">Arrastra con el ratón los recuadros punteados (subtítulos, título, logo, insignia y texto) para ponerlos donde quieras.</div>
+        <label style="margin-top:8px">Momento del clip (mueve la barra)<input type="range" id="pvT" min="0" max="100" step="0.1" value="0" disabled></label>
+        <div class="small" id="pvTime"></div>
+        <div class="row" style="margin-top:8px">
+          <button id="pvBtn" disabled>Actualizar vista previa</button>
+          <button id="pvVidBtn" class="primary" disabled style="display:none">▶ Previsualizar clip en video</button>
+        </div>
+        <div class="small">Fotograma o video de prueba con el mismo encuadre, movimiento de cámara, subtítulos, logo y texto que tendrá el clip. Usa video liviano para ser rápido; el clip final se genera en alta calidad (hasta 1080p).</div>
+        <details class="vid" id="vidBox"><summary>Ver el video original</summary><video id="prev" controls></video></details>
+      </div>
+
+      <!-- controles -->
+      <div class="ctlCol" id="ctlCol">
+        <div class="tabs" id="tabs">
+          <button type="button" class="tab on" data-t="clip">Este clip</button>
+          <button type="button" class="tab" data-t="cam">Formato y cámara</button>
+          <button type="button" class="tab" data-t="subs">Subtítulos</button>
+          <button type="button" class="tab" data-t="brand">Título y marca</button>
+        </div>
+
+        <!-- Este clip -->
+        <div class="pane on" data-p="clip">
+          <label class="tgroup">Título<input type="text" id="cTitle"></label>
+          <div class="row">
+            <div class="tgroup"><div class="lbl">Inicio</div>
+              <div class="tline"><button type="button" data-nudge="s-1" title="Un segundo antes">−1 s</button><input type="text" id="cStart" class="tm" style="width:92px"><button type="button" data-nudge="s+1" title="Un segundo después">+1 s</button><button type="button" data-use="s" title="Usa el momento que muestra la vista previa">⏱ usar momento</button></div></div>
+            <div class="tgroup"><div class="lbl">Fin</div>
+              <div class="tline"><button type="button" data-nudge="e-1">−1 s</button><input type="text" id="cEnd" class="tm" style="width:92px"><button type="button" data-nudge="e+1">+1 s</button><button type="button" data-use="e" title="Usa el momento que muestra la vista previa">⏱ usar momento</button></div></div>
+          </div>
+          <div class="small" id="cInfo"></div>
+          <div class="small" style="margin-top:2px">Tip: mueve la barra de la vista previa hasta donde quieres cortar y pulsa «⏱ usar momento». También puedes escribir el tiempo (por ejemplo 1:05 o 65).</div>
+          <div class="row" style="margin-top:8px"><button type="button" id="cPlay">▶ Ver este tramo en el video original</button></div>
+          <hr>
+          <label>Caption para el post (puedes editarlo)<textarea id="cCap" rows="4"></textarea></label>
+          <div class="row" style="margin-top:6px"><button type="button" id="cCopy">Copiar caption</button></div>
+          <div class="small" id="cWhy"></div>
+        </div>
+
+        <!-- Formato y cámara -->
+        <div class="pane" data-p="cam">
+          <div class="scope" data-g="cam"><span>Todo lo de esta pestaña se aplica a:</span><div class="seg"><button type="button" data-s="all" class="on">Todos los clips</button><button type="button" data-s="clip">Solo este clip</button></div></div>
+          <select id="cCam" style="display:none"><option value=""></option></select><div id="trackNote" style="display:none"></div>
+          <div class="secH">Calidad de descarga y exportación</div>
+          <div class="row">
+            <label>Calidad del video fuente (al exportar)
+              <select id="srcQual" data-k>
+                <option value="1080" selected>1080p Full HD (rápido)</option>
+                <option value="1440">1440p 2K (muy nítido al hacer zoom)</option>
+                <option value="2160">2160p 4K (máxima calidad)</option>
+              </select>
+            </label>
+            <label title="Aplica un realce fino de bordes para compensar la pérdida de nitidez al acercar el video."><span><input type="checkbox" id="sharpOn" data-k checked> Realzar nitidez (evita efecto borroso)</span></label>
+            <label title="Exporta con mayor bitrate (CQ 15) para máxima definición."><span><input type="checkbox" id="ultraEnc" data-k> Bitrate Ultra</span></label>
+          </div>
+          <hr>
+          <div class="secH">1 · Diseño de la pantalla</div>
+          <div class="row">
+            <label>Relación de aspecto
+              <select id="ratio" data-k><option>9:16</option><option>3:4</option><option>4:5</option><option>1:1</option><option>4:3</option><option>16:9</option><option value="custom">Personalizada…</option></select>
+            </label>
+            <label id="cratioBox">Proporción (ancho:alto)<input type="text" id="cratio" data-k value="9:16" style="width:80px" placeholder="9:16"></label>
+            <label>Diseño
+              <select id="mode" data-k>
+                <option value="crop">Recortar (el video llena toda la pantalla)</option>
+                <option value="frame">Marco con fondo (tú eliges tamaño y posición del video)</option>
+                <option value="split">Pantalla dividida (2 personas, una arriba y otra abajo)</option>
+                <option value="streamer">Modo streamer (cámara del streamer + gameplay)</option>
+                <option value="blur">Completo con fondo borroso</option>
+              </select>
+            </label>
+          </div>
+          <div class="vbox" id="layBox" style="display:none">
+            <div class="small" style="margin-bottom:8px">El video se pone dentro de la pantalla final y el resto se rellena con fondo. Ejemplo: pantalla 9:16 + video 4:5 + fondo borroso.</div>
+            <div class="row">
+              <label>Proporción del video
+                <select id="lfg" data-k><option value="orig">Original (completo, sin recortar)</option><option>16:9</option><option>4:3</option><option>5:4</option><option>1:1</option><option>4:5</option><option>3:4</option><option>9:16</option><option value="custom">Personalizada…</option></select>
+              </label>
+              <label id="lfgcBox">Ancho:alto<input type="text" id="lfgc" data-k value="4:5" style="width:70px"></label>
+              <label>Tamaño del video (% del ancho)<input type="range" id="lscaleFg" data-k min="40" max="100" step="1" value="100" style="width:150px"></label>
+              <label>Posición vertical (arriba a abajo)<input type="range" id="lposY" data-k min="0" max="100" step="1" value="50" style="width:150px"></label>
+            </div>
+            <div class="row">
+              <label>Fondo
+                <select id="lbg" data-k><option value="blur">Borroso (del mismo video)</option><option value="black">Negro</option><option value="color">Color</option></select>
+              </label>
+              <label id="lbgcBox">Color<input type="color" id="lbgc" data-k value="#111111"></label>
+              <label id="lblurBox">Desenfoque<input type="range" id="lblur" data-k min="8" max="60" step="1" value="25" style="width:130px"></label>
+            </div>
+          </div>
+          <div class="vbox" id="splitBox" style="display:none">
+            <div class="row">
+              <label>Modo de pantalla dividida
+                <select id="splitMode" data-k>
+                  <option value="manual">Manual: yo marco quién va arriba y quién va abajo</option>
+                  <option value="auto">Automática: detecta 2 personas solas</option>
+                </select>
+              </label>
+              <label id="splitOrderBox">Quién va arriba
+                <select id="splitOrder" data-k><option value="lr">La de la izquierda</option><option value="rl">La de la derecha</option></select>
+              </label>
+            </div>
+            <div id="splitManualBox">
+              <div class="row" style="margin-bottom:6px">
+                <button type="button" id="spLoadFrame">Cargar fotograma actual</button>
+                <label style="flex-direction:row;gap:6px;align-items:center"><input type="radio" name="spTarget" value="top" checked> Marcar panel ARRIBA (amarillo)</label>
+                <label style="flex-direction:row;gap:6px;align-items:center"><input type="radio" name="spTarget" value="bot"> Marcar panel ABAJO (azul)</label>
+              </div>
+              <div class="camPick" id="spPick">
+                <img id="spImg" alt="" draggable="false">
+                <div class="cbox" id="spBoxTop" style="left:28%;width:32%"><b>Arriba</b></div>
+                <div class="cbox b2" id="spBoxBot" style="left:72%;width:32%"><b>Abajo</b></div>
+              </div>
+              <input type="hidden" id="spTopX" data-k value="28">
+              <input type="hidden" id="spBotX" data-k value="72">
+              <div class="small">Haz clic sobre cada persona en la foto para centrar su recuadro amarillo (arriba) y azul (abajo).</div>
+            </div>
+          </div>
+          <div class="vbox" id="streamBox" style="display:none">
+            <div class="small" style="margin-bottom:8px">Toma <b>dos zonas del mismo video</b>: la cámara del streamer y el gameplay (o lo que está mirando), y las junta en una sola pantalla. Primero marca cada zona dibujando un rectángulo sobre el fotograma.</div>
+            <div class="row">
+              <button type="button" id="stLoad">Cargar fotograma del momento actual</button>
+              <label><span><input type="radio" name="stTarget" value="cam" checked> Dibujar la cámara (amarillo)</span></label>
+              <label><span><input type="radio" name="stTarget" value="game"> Dibujar el gameplay (azul)</span></label>
+            </div>
+            <div id="stWrap"><img id="stImg" alt="" draggable="false"><div class="rc cam" id="rc_cam"></div><div class="rc game" id="rc_game"></div></div>
+            <input type="hidden" id="stCam" data-k value="0.70,0.55,0.28,0.40"><input type="hidden" id="stGame" data-k value="0,0,1,1">
+            <div class="small">Si no marcas el gameplay, usa todo el cuadro. Dibuja arrastrando; vuelve a dibujar para corregir.</div>
+            <div class="row" style="margin-top:10px">
+              <label>Distribución
+                <select id="stLayout" data-k><option value="stack">Cámara en una franja y gameplay en el resto</option><option value="pip">Gameplay de fondo y cámara pequeña encima</option></select>
+              </label>
+              <label id="stCamPosBox">Cámara va
+                <select id="stCamPos" data-k><option value="top">Arriba</option><option value="bottom">Abajo</option></select>
+              </label>
+              <label id="stCamHBox">Alto de la cámara (%)<input type="range" id="stCamH" data-k min="20" max="70" step="1" value="38" style="width:130px"></label>
+              <label id="stPipBox">Tamaño de la cámara (%)<input type="range" id="stPip" data-k min="15" max="70" step="1" value="38" style="width:130px"></label>
+              <label id="stPosBox">Esquina
+                <select id="stPos" data-k><option value="tr">Arriba derecha</option><option value="tl">Arriba izquierda</option><option value="tc">Arriba centro</option><option value="br">Abajo derecha</option><option value="bl">Abajo izquierda</option><option value="bc">Abajo centro</option></select>
+              </label>
+              <label>Gameplay
+                <select id="stFit" data-k><option value="fill">Llenar (recorta los lados)</option><option value="fit">Completo (con fondo borroso)</option></select>
+              </label>
+            </div>
+          </div>
+          <div id="trackRow">
+            <hr>
+            <div class="secH">2 · Seguimiento de la cámara</div>
+            <label class="tgroup">Quién enfoca la cámara
+              <select id="track" data-k>
+                <option value="speaker">Automática: sigue a quien habla</option>
+                <option value="ab">2 Posiciones Fijas (Persona A / B): alterna sola al hablar</option>
+                <option value="voice">Por voz: yo marco a cada persona</option>
+                <option value="manual">Manual: cambios de cámara paso a paso</option>
+                <option value="center">Centrado fijo</option>
+              </select>
+            </label>
+            <div class="small" id="trackHelp"></div>
+            <div class="vbox" id="abBox" style="display:none">
+              <div class="small" style="margin-bottom:8px"><b>Ideal para podcasts, entrevistas o debates:</b> marca dónde está la Persona A (amarillo) y dónde está la Persona B (azul). La cámara alternará automáticamente entre ambas según quién hable, sin irse jamás a lugares aleatorios.</div>
+              <div class="row" style="margin-bottom:6px">
+                <button type="button" id="abLoadFrame">Cargar fotograma actual</button>
+                <label style="flex-direction:row;gap:6px;align-items:center"><input type="radio" name="abTarget" value="a" checked> Marcar Persona A (amarillo)</label>
+                <label style="flex-direction:row;gap:6px;align-items:center"><input type="radio" name="abTarget" value="b"> Marcar Persona B (azul)</label>
+                <label>Cambio de cámara
+                  <select id="abTr" data-k style="padding:4px 24px 4px 8px"><option value="cut">Corte seco (instantáneo)</option><option value="pan">Paneo suave</option></select>
+                </label>
+              </div>
+              <div class="camPick" id="abPick">
+                <img id="abImg" alt="" draggable="false">
+                <div class="cbox" id="abBoxA" style="left:28%;width:32%"><b>Persona A</b></div>
+                <div class="cbox b2" id="abBoxB" style="left:72%;width:32%"><b>Persona B</b></div>
+              </div>
+              <input type="hidden" id="abAx" data-k value="28">
+              <input type="hidden" id="abBx" data-k value="72">
+            </div>
+            <div class="vbox" id="manualBox" style="display:none">
+              <div class="small" style="margin-bottom:8px">
+                <b>Cámara por tomas.</b> Ves el video completo y un recuadro que muestra lo que enfocará la cámara. Para decir a quién enfoca una toma, haz clic en la imagen. Hay tres formas de crear los cortes:<br>
+                <b>1.</b> «Traer cámara automática» y solo corriges lo que salió mal. <b>2.</b> «Grabar cortes»: reproduces y tocas <span class="kb">1</span> <span class="kb">2</span> <span class="kb">3</span> cuando cambie quien habla. <b>3.</b> A mano: doble clic en la línea de tiempo o «＋ Cambio aquí».
+              </div>
+              <div class="row" style="margin-bottom:6px;align-items:center">
+                <button type="button" id="camAuto" title="Calcula la cámara automática de este clip y la convierte en tomas que puedes mover y borrar">⚡ Traer cámara automática</button>
+                <button type="button" id="manRec" title="Reproduce el clip; toca 1, 2 o 3 para cambiar la cámara en ese instante">● Grabar cortes</button>
+                <button type="button" id="manPlayBtn" title="Reproducir o pausar (barra espaciadora)">▶ Reproducir</button>
+              </div>
+              <div class="small" id="camMsg" style="min-height:16px"></div>
+              <div class="camPick" id="manPick">
+                <video id="manVid" playsinline preload="auto" style="display:none"></video>
+                <img id="manImg" alt="" draggable="false">
+                <div class="cbox" id="manBox" style="left:50%;width:32%"><b id="manBoxLbl">Toma 1 (Inicio)</b></div>
+              </div>
+              <div class="tlWrap"><div class="tl" id="camTl"></div><div class="tlRuler" id="tlRuler"></div></div>
+              <div class="row" style="margin-bottom:6px;align-items:center">
+                <span class="small">Posiciones rápidas:</span><span id="manPresets"></span>
+                <button type="button" class="primary" id="keyAdd">＋ Cambio aquí (<span id="manCurT">0:00</span>)</button>
+                <button type="button" id="keyUndo" title="Deshacer (Ctrl+Z)">↶ Deshacer</button>
+                <button type="button" id="keyClear">Borrar todos los cortes</button>
+              </div>
+              <div class="small" style="margin-bottom:6px">Para cambiar una posición rápida: pon el recuadro donde quieras (clic en la imagen) y pulsa ⌖ junto al número. Arrastra las marcas blancas para mover un corte. Las franjas rojas son tramos donde no se vio ninguna cara.</div>
+              <div id="keysList"></div>
+              <label id="panBox">Ajuste fino izquierda ↔ derecha de esta toma<input type="range" id="panNow" min="0" max="100" step="1" value="50" style="width:100%"></label>
+              <input type="hidden" id="panx" data-k value="50">
+            </div>
+            <div class="vbox" id="voiceBox" style="display:none">
+              <div class="small" style="margin-bottom:8px">Detecta las voces <b>solo de este clip</b>. 1) elige cuántas personas hablan en el clip, 2) pulsa «Detectar voces de este clip», 3) en cada foto, <b>haz clic sobre la persona que habla con esa voz</b>. (La opción «Automática» no necesita esto.)</div>
+              <div class="row">
+                <label>Personas que hablan en este clip
+                  <select id="vk"><option value="0">Detectar solo (auto)</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="1">1</option></select>
+                </label>
+                <button type="button" id="vBtn" disabled>Detectar voces de este clip</button>
+              </div>
+              <div class="small" id="vMsg">Primero analiza un video.</div>
+              <div id="vList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subtítulos -->
+        <div class="pane" data-p="subs">
+          <div class="scope" data-g="subs"><span>El estilo de subtítulos se aplica a:</span><div class="seg"><button type="button" data-s="all" class="on">Todos los clips</button><button type="button" data-s="clip">Solo este clip</button></div></div>
+          <div class="secH">Estilo de subtítulos</div>
+          <div class="row">
+            <label><span><input type="checkbox" id="subOn" data-k checked> Subtítulos</span></label>
+            <label>Fuente
+              <select id="font" data-k><option>Arial</option><option>Arial Black</option><option>Impact</option><option>Segoe UI</option><option>Verdana</option><option>Tahoma</option><option>Trebuchet MS</option><option>Comic Sans MS</option></select>
+            </label>
+            <label>Tamaño<input type="number" id="size" data-k value="70" style="width:75px"></label>
+            <label>Color<input type="color" id="color" data-k value="#ffffff"></label>
+            <label>Borde<input type="color" id="ocolor" data-k value="#000000"></label>
+            <label>Grosor borde<input type="number" id="outline" data-k value="4" min="0" style="width:75px"></label>
+          </div>
+          <div class="row">
+            <label>Resaltar palabra<input type="color" id="hl" data-k value="#ffd600"></label>
+            <label><span><input type="checkbox" id="hlOn" data-k checked> activar</span></label>
+            <label><span><input type="checkbox" id="upper" data-k> MAYÚSCULAS</span></label>
+            <label>Palabras por vez<input type="number" id="smaxw" data-k value="4" min="1" max="8" style="width:65px"></label>
+          </div>
+          <div class="row">
+            <label>Posición rápida
+              <select id="spos"><option value="">Elegir…</option><option value="82">Abajo</option><option value="50">Centro</option><option value="14">Arriba</option></select>
+            </label>
+            <label>Altura (arriba a abajo)<input type="range" id="sposY" data-k min="0" max="100" step="1" value="82" style="width:160px"></label>
+            <label>Horizontal (izq. a der.)<input type="range" id="sposX" data-k min="0" max="100" step="1" value="50" style="width:160px"></label>
+            <label>Ancho del texto (%)<input type="range" id="swidth" data-k min="30" max="100" step="1" value="84" style="width:140px"></label>
+          </div>
+          <div class="small">La posición horizontal solo se nota si bajas el «Ancho del texto» (por ejemplo a 60 %). Puedes poner los subtítulos sobre el fondo borroso, bajo el video.</div>
+          <div class="small">Si una frase es larga, se parte sola en dos líneas y nunca se sale del recuadro.</div>
+
+          <hr>
+          <div class="secH">Texto de los subtítulos de este clip (puedes corregirlo)</div>
+          <div class="small">Haz clic en el tiempo de cualquier frase para ver ese momento en la vista previa. Si corriges una palabra, pulsa «Guardar cambios del texto» (o Enter) para actualizar la vista previa y el clip final.</div>
+          <div id="subEdList" class="subEdList"><span class="small">Elige un clip para ver sus subtítulos.</span></div>
+          <div class="row" style="margin-top:8px;align-items:center">
+            <button type="button" class="primary" id="subSaveBtn">Guardar cambios del texto</button>
+            <span class="small" id="subSaveMsg"></span>
+          </div>
+        </div>
+
+        <!-- Logo y marca -->
+        <div class="pane" data-p="brand">
+          <div class="scope" data-g="title"><span>El título se aplica a:</span><div class="seg"><button type="button" data-s="all" class="on">Todos los clips</button><button type="button" data-s="clip">Solo este clip</button></div></div>
+          <div class="secH">Título sobre el video</div>
+          <label><span><input type="checkbox" id="titOn" data-k> Mostrar un título encima de los subtítulos</span></label>
+          <label class="tgroup" style="margin-top:8px">Texto del título (editable; puedes poner emojis)<textarea id="cOvText" rows="3" placeholder="Escribe el título que saldrá en el video"></textarea></label>
+          <div class="row"><button type="button" id="cOvReset">↺ Usar el título del clip</button></div>
+          <div class="row">
+            <label>Estilo<select id="titStyle" data-k><option value="white">Caja blanca, texto negro</option><option value="black">Caja negra, texto blanco</option><option value="yellow">Caja amarilla, texto negro</option><option value="none">Sin caja (texto blanco con contorno)</option></select></label>
+            <label>Tamaño<input type="range" id="titSize" data-k min="36" max="110" step="1" value="64" style="width:120px"></label>
+            <input type="hidden" id="titX" data-k value="50"><label>Altura (arriba a abajo)<input type="range" id="titY" data-k min="5" max="95" step="1" value="62" style="width:130px"></label>
+            <label>Ancho máx. (%)<input type="range" id="titW" data-k min="40" max="95" step="1" value="84" style="width:120px"></label>
+          </div>
+          <div class="small">El texto es siempre de este clip; el estilo y la posición siguen el alcance de arriba.</div>
+          <hr>
+          <div class="scope" data-g="brand"><span>La marca (insignia, logo y texto) se aplica a:</span><div class="seg"><button type="button" data-s="all" class="on">Todos los clips</button><button type="button" data-s="clip">Solo este clip</button></div></div>
+          <div class="small" style="margin-bottom:10px">Puedes activar a la vez la insignia del creador, tu logo y tu @. Cada uno tiene su propia posición, tamaño y opacidad; si dos quedan en el mismo lugar se encimarán, así que ponlos en posiciones distintas.</div>
+          <div class="secH">1. Insignia de Creador / Streaming (Estilo Créditos)</div>
+          <div class="row">
+            <label><span><input type="checkbox" id="badgeOn" data-k> Activar insignia</span></label>
+            <label>Plataforma
+              <select id="badgePlat" data-k>
+                <option value="kick">Kick</option>
+                <option value="twitch">Twitch</option>
+                <option value="youtube">YouTube</option>
+                <option value="tiktok">TikTok</option>
+                <option value="instagram">Instagram</option>
+              </select>
+            </label>
+            <label class="grow">Usuario / Canal
+              <input type="text" id="badgeUser" data-k list="creatorList" placeholder="RDJAVI">
+              <datalist id="creatorList"></datalist>
+            </label>
+            <button type="button" id="saveCreatorBtn">Guardar</button>
+          </div>
+          <div class="row">
+            <label>Posición insignia
+              <input type="hidden" id="bx" data-k value="15"><input type="hidden" id="by" data-k value="90"><select id="badgePos" data-k><option value="custom">Personalizada (arrastrada)</option><option value="bl">Abajo izq.</option><option value="bc">Centro-bajo</option><option value="br">Abajo der.</option><option value="tl">Arriba izq.</option><option value="tr">Arriba der.</option></select>
+            </label>
+            <label>Tamaño %<input type="number" id="badgeScale" data-k value="24" min="5" max="80" style="width:75px"></label>
+            <label>Opacidad<input type="range" id="badgeOp" data-k min="0.1" max="1" step="0.05" value="0.95"></label>
+          </div>
+
+          <hr style="margin:16px 0">
+          <div class="secH">2. Logo Personalizado (Opcional)</div>
+          <div class="row">
+            <label><span><input type="checkbox" id="logoOn" data-k> Activar logo imagen</span></label>
+            <label>Subir logo<input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp"></label>
+            <label>Posición
+              <input type="hidden" id="lx" data-k value="85"><input type="hidden" id="ly" data-k value="10"><select id="lpos" data-k><option value="custom">Personalizada (arrastrada)</option><option value="tr">Arriba der.</option><option value="tl">Arriba izq.</option><option value="br">Abajo der.</option><option value="bl">Abajo izq.</option><option value="c">Centro</option><option value="bc">Centro-bajo</option></select>
+            </label>
+            <label>Tamaño %<input type="number" id="lscale" data-k value="18" min="3" max="80" style="width:75px"></label>
+            <label>Opacidad<input type="range" id="lop" data-k min="0.1" max="1" step="0.05" value="0.9"></label>
+          </div>
+          <div class="small">Logos guardados: <span id="logoCount">0 de 5</span>. Toca uno para seleccionarlo.</div>
+          <div class="logos" id="logos"></div>
+
+          <hr style="margin:16px 0">
+          <div class="secH">3. Texto de Marca Adicional (tu @) <span class="badge">Opcional</span></div>
+          <div class="row">
+            <label><span><input type="checkbox" id="textOn" data-k checked> Activar texto</span></label>
+            <label class="grow">Texto extra<input type="text" id="tval" data-k placeholder="@tupagina"></label>
+            <label>Color<input type="color" id="tcolor" data-k value="#ffffff"></label>
+            <label>Tamaño<input type="number" id="tsize" data-k value="44" style="width:75px"></label>
+            <label>Opacidad<input type="range" id="top" data-k min="0.1" max="1" step="0.05" value="0.5"></label>
+            <label>Posición
+              <input type="hidden" id="tx" data-k value="50"><input type="hidden" id="ty" data-k value="70"><select id="tpos" data-k><option value="custom">Personalizada (arrastrada)</option><option value="bc">Centro-bajo</option><option value="c">Centro</option><option value="br">Abajo der.</option><option value="bl">Abajo izq.</option><option value="tr">Arriba der.</option><option value="tl">Arriba izq.</option></select>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 3. CLIPS LISTOS ===================== -->
+  <div class="card" id="s3"><h2>3. Clips listos</h2>
+    <div class="row">
+      <label class="grow">Carpeta donde guardar los clips (opcional)<input type="text" id="outdir" data-k placeholder="C:\Users\tu_usuario\iCloudDrive\Clipear"></label>
+      <button type="button" id="outTest">Probar carpeta</button>
+      <button type="button" id="saveAll" style="display:none">Guardar todos en mi carpeta</button>
+      <button type="button" id="capsTxt" style="display:none">Descargar captions (.txt)</button>
+    </div>
+    <div class="small">Los clips NO se copian solos: se guardan en esa carpeta solo cuando pulsas «Guardar en mi carpeta». Se crea una subcarpeta con el título del video y un archivo captions.txt con los textos.</div>
+    <div class="msg" id="outMsg"></div>
+    <div class="row" id="saveBar" style="display:none"></div>
+    <div class="msg" id="saveMsg"></div>
+    <details class="vbox" id="socBox">
+      <summary style="cursor:pointer;font-weight:600" id="socSum">Conectar Facebook e Instagram (para publicar desde aquí)</summary>
+      <div id="socOn" style="display:none;margin-top:10px">
+        <div id="socList"></div>
+        <button type="button" id="socAdd" style="margin-top:8px">+ Agregar otra cuenta (otro portafolio u otra Página)</button>
+      </div>
+      <div id="socOff1" style="margin-top:10px">
+        <div class="small" style="margin-bottom:8px">Para agregar otro portafolio: genera el token en el Explorador con la cuenta de Facebook que administra esas Páginas (con esta misma app o con otra) y en la ventana de Facebook marca sus Páginas y sus cuentas de Instagram. Las cuentas que ya conectaste se conservan. Se hace una sola vez por cuenta. Usa tu propia app de Meta (modo desarrollo, sin revisión). Los datos se guardan solo en tu PC (data\social.json) y solo se envían a Meta.</div>
+        <div class="row">
+          <label>ID de la app<input type="text" id="socAppId" autocomplete="off"></label>
+          <label>Clave secreta de la app<input type="password" id="socSecret" autocomplete="off"></label>
+          <label class="grow">Token del Explorador de la API (el corto)<input type="password" id="socTok" autocomplete="off"></label>
+          <button type="button" id="socGo" class="primary">Conectar</button>
+        </div>
+        <div id="socPick" style="display:none" class="row">
+          <div class="grow"><div class="small" style="margin-bottom:4px">Marca las Páginas que quieres usar:</div><div id="socPages"></div></div>
+          <button type="button" id="socUse" class="primary">Usar las marcadas</button>
+        </div>
+        <div class="msg" id="socMsg"></div>
+      </div>
+    </details>
+    <div class="outs" id="outs"><span class="sub">Aún no hay clips.</span></div>
+  </div>
+  <details class="card" id="spaceBox">
+    <summary style="cursor:pointer;font-weight:600">Espacio en disco</summary>
+    <div class="small" style="margin:8px 0 12px">Aquí ves cuánto ocupa cada cosa y puedes liberar espacio. Los clips que guardaste con «Guardar en mi carpeta» están en otra carpeta y no se tocan. Al abrir el programa se borran solos los trabajos temporales y el caché se mantiene bajo 6 GB.</div>
+    <div class="row">
+      <div class="vbox" style="margin:0;flex:1;min-width:230px"><b id="spJobs">—</b><div class="small">Trabajos temporales (video de análisis en uso). Se pueden borrar sin problema.</div><button type="button" id="spCleanJobs" style="margin-top:8px">Borrar temporales</button></div>
+      <div class="vbox" style="margin:0;flex:1;min-width:230px"><b id="spCache">—</b><div class="small">Análisis guardados. Si borras uno, volver a analizar ese video tarda de nuevo.</div>
+        <div class="row" style="margin:8px 0 0"><label>Borrar los de más de (días)<input type="number" id="spCacheDays" value="7" min="0" style="width:80px"></label><button type="button" id="spCleanCache">Borrar caché</button></div></div>
+      <div class="vbox" style="margin:0;flex:1;min-width:230px"><b id="spClips">—</b><div class="small">Clips generados que aún no guardaste ni publicaste.</div>
+        <div class="row" style="margin:8px 0 0"><label>Borrar los de más de (días)<input type="number" id="spClipDays" value="7" min="0" style="width:80px"></label><button type="button" id="spCleanClips">Borrar clips</button></div></div>
+    </div>
+    <div class="msg" id="spMsg"></div>
+  </details>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const post = (u, b) => fetch(u, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(b)}).then(r => r.json());
+const esc = x => String(x == null ? '' : x).replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
+let job = null;
+
+document.querySelectorAll('[data-k]').forEach(el => {
+  const v = localStorage.getItem('cl_' + el.id);
+  if (v !== null) { el.type === 'checkbox' ? el.checked = v === '1' : el.value = v; }
+  el.onchange = () => localStorage.setItem('cl_' + el.id, el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value);
+});
+const syncAI = () => {
+  const g = $('ai').value === 'gemini';
+  $('keyBox').style.display = g ? '' : 'none';
+  $('model').style.display = g ? '' : 'none';
+  $('modelOl').style.display = g ? 'none' : '';
+};
+$('ai').addEventListener('change', syncAI);
+if (!$('model').value) { $('model').selectedIndex = 0; }
+syncAI();
+
+let creators = JSON.parse(localStorage.getItem('cl_creators') || '["RDJAVI"]');
+function updateCreatorList() {
+  $('creatorList').innerHTML = creators.map(c => `<option value="${esc(c)}">`).join('');
+}
+updateCreatorList();
+$('saveCreatorBtn').onclick = () => {
+  const val = $('badgeUser').value.trim();
+  if (!val) return;
+  if (!creators.includes(val)) {
+    creators.unshift(val);
+    if (creators.length > 15) creators.pop();
+    localStorage.setItem('cl_creators', JSON.stringify(creators));
+    updateCreatorList();
+  }
+  pvSchedule(100);
+};
+
+function setStep(n) {
+  [1, 2, 3].forEach(i => { $('st' + i).className = i === n ? 'on' : (i < n ? 'done' : ''); });
+}
+
+const p2 = n => String(n).padStart(2, '0');
+const fmtHMS = sec => { sec = Math.max(0, Math.round(sec)); return p2(Math.floor(sec / 3600)) + ':' + p2(Math.floor(sec % 3600 / 60)) + ':' + p2(sec % 60); };
+function maskTime(el) {
+  const norm = () => {
+    const d = el.value.replace(/\D/g, '').slice(-6);
+    if (/^0*$/.test(d)) { el.value = ''; return; }
+    const p = d.padStart(6, '0'); el.value = p.slice(0, 2) + ':' + p.slice(2, 4) + ':' + p.slice(4);
+  };
+  const fix = () => {
+    if (!el.value) return;
+    const [h, m, s] = el.value.split(':').map(Number); el.value = fmtHMS(h * 3600 + m * 60 + s);
+  };
+  el.addEventListener('input', norm);
+  el.addEventListener('blur', () => { fix(); el.dispatchEvent(new Event('change')); });
+  el.addEventListener('focus', () => el.select());
+  el.addEventListener('paste', e => {
+    const m = ((e.clipboardData || window.clipboardData).getData('text') || '').match(/[?&#]t=(\d+)/);
+    if (m) { e.preventDefault(); el.value = fmtHMS(+m[1]); el.dispatchEvent(new Event('change')); }
+  });
+  norm(); fix();
+}
+maskTime($('start')); maskTime($('end'));
+
+let logoSel = localStorage.getItem('cl_logoSel') || '';
+async function loadLogos() {
+  const list = await (await fetch('/api/logos')).json();
+  if (!list.includes(logoSel)) logoSel = list[0] || '';
+  localStorage.setItem('cl_logoSel', logoSel);
+  $('logos').innerHTML = list.map(n => `<div class="lg ${n === logoSel ? 'sel' : ''}" data-n="${esc(n)}" title="${esc(n)}">
+      <img src="/logos/${encodeURIComponent(n)}"><button class="x" data-del="${esc(n)}" title="Borrar">✕</button></div>`).join('')
+    || '<span class="small">Todavía no hay logos personalizados guardados.</span>';
+  $('logoCount').textContent = list.length + ' de 5';
+  document.querySelectorAll('.lg').forEach(el => el.onclick = async ev => {
+    if (ev.target.dataset.del) {
+      if (!confirm('¿Borrar este logo?')) return;
+      await fetch('/api/logo/' + encodeURIComponent(ev.target.dataset.del), {method: 'DELETE'});
+      await loadLogos(); pvSchedule(); return;
+    }
+    logoSel = el.dataset.n; localStorage.setItem('cl_logoSel', logoSel);
+    $('logoOn').checked = true; $('logoOn').onchange();
+    await loadLogos(); pvSchedule();
+  });
+}
+$('logoFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const fd = new FormData(); fd.append('file', f);
+  const r = await (await fetch('/api/logo', {method: 'POST', body: fd})).json();
+  e.target.value = '';
+  if (r.error) { $('rmsg').className = 'msg err'; $('rmsg').textContent = r.error; return; }
+  logoSel = r.name; localStorage.setItem('cl_logoSel', logoSel);
+  $('logoOn').checked = true; $('logoOn').onchange();
+  $('rmsg').className = 'msg'; $('rmsg').textContent = 'Logo guardado.';
+  await loadLogos(); pvSchedule();
+};
+loadLogos();
+
+function collectOpt() {
+  const badgeActive = $('badgeOn').checked;
+  const plat = $('badgePlat').value;
+  const user = $('badgeUser').value.trim() || 'RDJAVI';
+  const logoActive = $('logoOn').checked;
+
+  return {
+    ratio: $('ratio').value, cratio: $('cratio').value,
+    mode: $('mode').value,
+    layout: {fg: $('lfg').value, fgc: $('lfgc').value, scale: +$('lscaleFg').value, y: +$('lposY').value, bg: $('lbg').value, bg_color: $('lbgc').value, blur: +$('lblur').value},
+    quality: {src: +$('srcQual').value, sharp: $('sharpOn').checked, ultra: $('ultraEnc').checked},
+    split: {mode: $('splitMode').value, order: $('splitOrder').value, top_x: +$('spTopX').value / 100, bot_x: +$('spBotX').value / 100},
+    track: {mode: $('track').value, x: +$('panx').value / 100, ax: +$('abAx').value / 100, bx: +$('abBx').value / 100, ab_tr: $('abTr').value, speakers: spkX.slice()},
+    sub: {
+      enabled: $('subOn').checked, font: $('font').value, size: +$('size').value, color: $('color').value, 
+      outline_color: $('ocolor').value, outline: +$('outline').value, highlight: $('hlOn').checked ? $('hl').value : '', 
+      pos_y: +$('sposY').value, pos_x: +$('sposX').value, width: +$('swidth').value, max_words: +$('smaxw').value, upper: $('upper').checked
+    },
+    logo: {
+      enabled: logoActive,
+      file: logoSel,
+      pos: $('lpos').value, x: +$('lx').value, y: +$('ly').value,
+      scale: $('lscale').value,
+      opacity: $('lop').value
+    },
+    badge: {
+      enabled: badgeActive,
+      file: `badge:${plat}:${user}`,
+      pos: $('badgePos').value, x: +$('bx').value, y: +$('by').value,
+      scale: $('badgeScale').value,
+      opacity: $('badgeOp').value
+    },
+    text: {value: $('textOn').checked ? $('tval').value : '', color: $('tcolor').value, size: +$('tsize').value, opacity: $('top').value, pos: $('tpos').value, x: +$('tx').value, y: +$('ty').value}
+  };
+}
+
+function syncTrack() {
+  const md = $('mode').value;
+  $('trackRow').style.display = (md === 'crop' || md === 'frame') ? '' : 'none';
+  $('layBox').style.display = md === 'frame' ? '' : 'none';
+  $('splitBox').style.display = md === 'split' ? '' : 'none';
+  $('cratioBox').style.display = $('ratio').value === 'custom' ? '' : 'none';
+  $('lfgcBox').style.display = $('lfg').value === 'custom' ? '' : 'none';
+  $('lbgcBox').style.display = $('lbg').value === 'color' ? '' : 'none';
+  $('lblurBox').style.display = $('lbg').value === 'blur' ? '' : 'none';
+  $('panBox').style.display = $('track').value === 'manual' ? '' : 'none';
+  $('voiceBox').style.display = (md === 'crop' || md === 'frame') && $('track').value === 'voice' ? '' : 'none';
+}
+
+const mmss = x => Math.floor(x / 60) + ':' + p2(Math.floor(x % 60));
+const fmtClip = x => {
+  x = Math.max(0, x); let m = Math.floor(x / 60), s = Math.round((x % 60) * 10) / 10;
+  if (s >= 60) { s -= 60; m++; }
+  return m + ':' + (s < 10 ? '0' : '') + (Number.isInteger(s) ? s : s.toFixed(1));
+};
+const parseClip = str => {
+  const t = String(str).trim().replace(',', '.'); if (!t) return NaN;
+  return t.split(':').reduce((a, p) => a * 60 + parseFloat(p), 0);
+};
+const r1 = x => Math.round(x * 10) / 10;
+
+let curPhrases = [];
+async function loadSubPhrases() {
+  const c = clips[sel];
+  if (!job || !c) return;
+  $('subSaveMsg').textContent = '';
+  const r = await post('/api/sub_phrases', {job, start: c.start, end: c.end});
+  if (r.error) { $('subEdList').innerHTML = `<span class="small err">${esc(r.error)}</span>`; return; }
+  curPhrases = r.phrases || [];
+  renderSubPhrases();
+}
+function renderSubPhrases() {
+  if (!curPhrases.length) {
+    $('subEdList').innerHTML = '<span class="small">No se detectaron palabras en este tramo.</span>';
+    return;
+  }
+  $('subEdList').innerHTML = curPhrases.map((p, i) => `<div class="subRow" data-i="${i}">
+      <button type="button" class="subT" data-t="${p.start}" title="Ver este momento en la vista previa">⏱ ${fmtClip(p.start)}</button>
+      <input type="text" class="subInp" value="${esc(p.text)}">
+    </div>`).join('');
+  $('subEdList').querySelectorAll('.subT').forEach(b => b.onclick = () => {
+    const t = +b.dataset.t;
+    $('pvT').value = t;
+    updPvTime();
+    if ($('prev').paused) $('prev').currentTime = t;
+    pvSchedule(80);
+  });
+  $('subEdList').querySelectorAll('.subInp').forEach(inp => {
+    inp.addEventListener('keydown', ev => {
+      if (ev.key === 'Enter') { ev.preventDefault(); saveSubPhrases(); }
+    });
+  });
+}
+async function saveSubPhrases() {
+  const c = clips[sel];
+  if (!job || !c || !curPhrases.length) return;
+  const rows = [...$('subEdList').querySelectorAll('.subRow')];
+  const payload = rows.map(row => {
+    const i = +row.dataset.i;
+    return {start: curPhrases[i].start, end: curPhrases[i].end, text: row.querySelector('.subInp').value};
+  });
+  $('subSaveBtn').disabled = true;
+  $('subSaveMsg').textContent = 'Guardando...';
+  const r = await post('/api/sub_save', {job, start: c.start, end: c.end, phrases: payload});
+  $('subSaveBtn').disabled = false;
+  if (r.error) { $('subSaveMsg').className = 'small err'; $('subSaveMsg').textContent = r.error; return; }
+  curPhrases = r.phrases || [];
+  renderSubPhrases();
+  $('subSaveMsg').className = 'small';
+  $('subSaveMsg').textContent = '✓ Subtítulos actualizados';
+  setTimeout(() => { if ($('subSaveMsg').textContent === '✓ Subtítulos actualizados') $('subSaveMsg').textContent = ''; }, 2500);
+  pvSchedule(100);
+}
+$('subSaveBtn').onclick = saveSubPhrases;
+
+let clips = [], sel = 0, srcDur = 0, pvReady = false, pvCam = '', pvTimer = null, pvSeq = 0;
+const camName = {smart: 'Inteligente', speaker: 'Hablante automático', auto: 'Sigue la cara', voice: 'Por voz', center: 'Centrado fijo', split: 'Pantalla dividida', blur: 'Fondo borroso'};
+function applyCam(opt, cam) {
+  if (!cam) return opt;
+  if (cam === 'blur') { opt.mode = 'blur'; return opt; }
+  if (cam === 'split') { opt.mode = 'split'; return opt; }
+  if (opt.mode !== 'frame') opt.mode = 'crop';
+  opt.track = Object.assign({}, opt.track, {mode: cam}); return opt;
+}
+function renderList() {
+  const n = clips.filter(c => c.on).length;
+  $('listCount').textContent = `Clips (${n} de ${clips.length} marcados)`;
+  $('cands').innerHTML = clips.map((c, i) => `<div class="cc ${i === sel ? 'on' : ''} ${c.on ? '' : 'off'}" data-i="${i}">
+      <input type="checkbox" class="sel" ${c.on ? 'checked' : ''} title="Incluir en «Generar»">
+      <div class="ccb"><b>${esc(c.title)}</b>
+        <div class="small">${fmtClip(c.start)} → ${fmtClip(c.end)} · ${Math.round(c.end - c.start)} s${c.cam ? ' · ' + camName[c.cam] : ''}${c.own ? ' · ajustes propios' : ''}</div></div>
+      ${c.isNew ? '<span class="pill" style="background:var(--ok)">nuevo</span>' : ''}<span class="pill">${esc(c.score || '-')}</span><button type="button" class="ccx" title="Descartar este clip">✕</button></div>`).join('')
+    || '<span class="small">La IA no sugirió clips. Prueba con otro rango o modelo.</span>';
+  $('render').textContent = `Generar clips seleccionados (${n})`;
+  $('render').disabled = !n || renderBusy;
+}
+let renderBusy = false;
+function updPvTime() {
+  const c = clips[sel]; if (!c) return;
+  $('pvTime').textContent = `Momento ${fmtClip(+$('pvT').value)} · clip ${fmtClip(c.start)} → ${fmtClip(c.end)} (${Math.round(c.end - c.start)} s)`;
+}
+function setPvRange(c, v) {
+  const lo = Math.max(0, Math.floor(c.start - 8)), hi = Math.ceil(c.end + 8), top = srcDur ? Math.min(srcDur, hi) : hi;
+  $('pvT').min = lo; $('pvT').max = Math.max(lo + 1, top); $('pvT').step = 0.1;
+  $('pvT').value = v == null ? c.start : v; $('pvT').disabled = false; $('pvBtn').disabled = false; $('pvVidBtn').disabled = false; updPvTime();
+}
+function fillClip() {
+  const c = clips[sel]; if (!c) return;
+  $('cTitle').value = c.title; $('cStart').value = fmtClip(c.start); $('cEnd').value = fmtClip(c.end);
+  $('cCap').value = c.caption || ''; $('cCam').value = c.cam || '';
+  $('cWhy').textContent = c.reason ? 'Por qué la IA lo eligió: ' + c.reason : '';
+  updInfo();
+}
+function updInfo() {
+  const c = clips[sel]; if (!c) return;
+  const d = c.end - c.start, bad = d < 1;
+  $('cInfo').className = 'small' + (bad ? ' err' : '');
+  $('cInfo').textContent = bad ? 'El fin debe ir después del inicio.' : `Duración del clip: ${Math.round(d)} s`;
+}
+function stopPvVideo() {
+  const v = $('pvVid');
+  if (v.style.display !== 'none') {
+    v.pause();
+    v.style.display = 'none';
+    $('pvImg').style.display = 'block';
+  }
+}
+function selectClip(i) {
+  stopPvVideo();
+  sel = i; clips[i].isNew = false; pvCam = clips[i].cam || ''; applyClipCtl(); renderList(); fillClip(); setPvRange(clips[i]);
+  loadSubPhrases();
+  if ($('prev').paused) $('prev').currentTime = clips[i].start;
+  pvSchedule(100);
+}
+function clipChanged(keepPv) {
+  const c = clips[sel]; renderList(); updInfo();
+  if (keepPv) { setPvRange(c, +$('pvT').value); } else { setPvRange(c); }
+  loadSubPhrases();
+  pvSchedule(300);
+}
+$('cands').addEventListener('click', e => {
+  const row = e.target.closest('.cc'); if (!row) return;
+  const i = +row.dataset.i;
+  if (e.target.classList.contains('sel')) { clips[i].on = e.target.checked; renderList(); return; }
+  selectClip(i);
+});
+$('selAll').onclick = () => { clips.forEach(c => c.on = true); renderList(); };
+$('selNone').onclick = () => { clips.forEach(c => c.on = false); renderList(); };
+
+$('cTitle').oninput = () => { clips[sel].title = $('cTitle').value; renderList(); };
+$('cCap').oninput = () => { clips[sel].caption = $('cCap').value; };
+$('cCopy').onclick = () => copyText($('cCap').value, $('cCopy'));
+$('cCam').onchange = () => { const c = clips[sel]; c.cam = $('cCam').value; pvCam = c.cam; renderList(); pvSchedule(100); };
+function setTime(which, v) {
+  const c = clips[sel]; if (!c || isNaN(v)) { fillClip(); return; }
+  v = Math.max(0, r1(v)); if (srcDur) v = Math.min(v, srcDur);
+  if (which === 's') c.start = v; else c.end = v;
+  fillClip(); clipChanged(false);
+  if (which === 's') $('pvT').value = c.start; else $('pvT').value = Math.max(c.start, c.end - 1);
+  updPvTime(); pvSchedule(200);
+}
+$('cStart').onchange = () => setTime('s', parseClip($('cStart').value));
+$('cEnd').onchange = () => setTime('e', parseClip($('cEnd').value));
+['cStart', 'cEnd'].forEach(id => $(id).addEventListener('focus', e => e.target.select()));
+document.querySelectorAll('[data-nudge]').forEach(b => b.onclick = () => {
+  const k = b.dataset.nudge, c = clips[sel], d = k[1] === '+' ? 1 : -1;
+  setTime(k[0], (k[0] === 's' ? c.start : c.end) + d);
+});
+document.querySelectorAll('[data-use]').forEach(b => b.onclick = () => {
+  const keep = +$('pvT').value; setTime(b.dataset.use, keep); $('pvT').value = keep; updPvTime();
+});
+$('cPlay').onclick = () => {
+  const c = clips[sel], v = $('prev'); $('vidBox').open = true;
+  v.currentTime = c.start; v.play();
+  v.ontimeupdate = () => { if (v.currentTime >= c.end) { v.pause(); v.ontimeupdate = null; } };
+};
+
+$('tabs').addEventListener('click', e => {
+  const t = e.target.closest('.tab'); if (!t) return;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
+  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.dataset.p === t.dataset.t));
+});
+
+function pvSchedule(delay = 500) {
+  if (!pvReady || !job) return;
+  stopPvVideo();
+  clearTimeout(pvTimer); pvTimer = setTimeout(pvRefresh, delay);
+}
+async function pvRefresh() {
+  if (!job || !pvReady) return;
+  stopPvVideo();
+  const my = ++pvSeq, t = +$('pvT').value;
+  updPvTime();
+  $('pvMsg').style.display = 'flex'; $('pvMsg').textContent = 'Generando vista previa...';
+  try {
+    const r = await fetch('/api/preview', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({job, t, opt: applyCam(buildOpt(clips[sel]), pvCam)})});
+    if (my !== pvSeq) return;
+    if (!r.ok) { const e = await r.json().catch(() => ({})); $('pvMsg').textContent = e.error || 'No se pudo generar la vista previa.'; return; }
+    $('trackNote').textContent = decodeURIComponent(r.headers.get('X-Note') || '') || 'Déjalo en «Igual que la cámara general» salvo que este clip necesite otra. Cambia solo este clip.';
+    const old = $('pvImg').src; $('pvImg').src = URL.createObjectURL(await r.blob());
+    if (old.startsWith('blob:')) URL.revokeObjectURL(old);
+    $('pvMsg').style.display = 'none';
+  } catch (e) { if (my === pvSeq) $('pvMsg').textContent = 'Error: ' + e; }
+}
+async function pvVideoRefresh() {
+  if (!job || !pvReady || !clips[sel]) return;
+  const c = clips[sel];
+  if (c.end - c.start < 1) {
+    $('pvMsg').style.display = 'flex'; $('pvMsg').textContent = 'El fin debe ir después del inicio.'; return;
+  }
+  clearTimeout(pvTimer);
+  const my = ++pvSeq;
+  $('pvVidBtn').disabled = true;
+  $('pvMsg').style.display = 'flex';
+  $('pvMsg').textContent = 'Generando video de prueba (con cámara y subtítulos)... tarda unos segundos.';
+  try {
+    const r = await fetch('/api/preview_video', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({job, start: c.start, end: c.end, opt: applyCam(buildOpt(clips[sel]), pvCam)})});
+    if (my !== pvSeq) return;
+    if (!r.ok) { const e = await r.json().catch(() => ({})); $('pvMsg').textContent = e.error || 'No se pudo generar el video de vista previa.'; return; }
+    $('trackNote').textContent = decodeURIComponent(r.headers.get('X-Note') || '') || 'Déjalo en «Igual que la cámara general» salvo que este clip necesite otra. Cambia solo este clip.';
+    const v = $('pvVid'), old = v.src;
+    v.src = URL.createObjectURL(await r.blob());
+    if (old.startsWith('blob:')) URL.revokeObjectURL(old);
+    $('pvImg').style.display = 'none';
+    v.style.display = 'block';
+    $('pvMsg').style.display = 'none';
+    v.play().catch(() => {});
+  } catch (e) {
+    if (my === pvSeq) $('pvMsg').textContent = 'Error: ' + e;
+  } finally {
+    if (my === pvSeq) $('pvVidBtn').disabled = false;
+  }
+}
+
+['input', 'change'].forEach(ev => $('ctlCol').addEventListener(ev, e => {
+  if (e.target.id === 'logoFile' || !e.target.hasAttribute('data-k')) return;
+  syncTrack(); pvSchedule();
+}));
+$('pvT').addEventListener('input', () => {
+  updPvTime(); pvSchedule();
+  if ($('prev').paused) $('prev').currentTime = +$('pvT').value;
+});
+$('pvBtn').onclick = pvRefresh;
+$('pvVidBtn').onclick = pvVideoRefresh;
+syncTrack();
+
+const fmt = s => s == null ? '' : (s >= 60 ? Math.floor(s / 60) + ' min ' + String(Math.round(s % 60)).padStart(2, '0') + ' s' : Math.round(s) + ' s');
+function drawProg(j, el) {
+  const run = j.state === 'working' || j.state === 'rendering', names = j.names || [];
+  if (!run || !names.length) { el.innerHTML = ''; return; }
+  const cur = Math.max(0, j.step || 0);
+  const chips = names.length <= 6 ? names.map((n, i) => `<span class="chip ${i < cur ? 'done' : i === cur ? 'run' : ''}">${i < cur ? '✓' : i === cur ? '●' : '○'} ${n}</span>`).join('') : '';
+  const ov = j.overall != null ? Math.round(j.overall * 100) : null;
+  const stuck = j.stall > (j.pct == null ? 150 : 60);
+  el.innerHTML = `<div class="chips">${chips}</div>
+    ${ov != null ? `<div class="bar"><i style="width:${ov}%"></i></div><div class="small">Total: ${ov}%${j.eta != null ? ' · faltan unos ' + fmt(j.eta) : ''}</div>` : ''}
+    <div class="bar ${j.pct == null ? 'ind' : ''}"><i style="width:${j.pct == null ? 100 : j.pct}%"></i></div>
+    <div class="small">Paso ${Math.min(cur + 1, names.length)} de ${names.length} · ${fmt(j.stepel)} en este paso · ${fmt(j.el)} en total</div>
+    ${stuck ? `<div class="warn">⚠ Sin avance desde hace ${fmt(j.stall)}. Puede estar trabado: mira la ventana negra donde corre app.py y, si ves un error, cópialo. También puedes cancelar y reintentar.</div>` : ''}
+    <button class="cancel" onclick="cancelJob()">Cancelar</button>`;
+}
+async function cancelJob() { if (job) await fetch('/api/cancel/' + job, {method: 'POST'}); }
+let outsKey = '', lastOuts = null, soc = {connected: false};
+function showOuts(list, caps, notes) {
+  lastOuts = [list, caps, notes];
+  const key = JSON.stringify([list, caps || {}, notes || {}]);
+  if (key === outsKey) return;
+  outsKey = key;
+  $('saveAll').style.display = list.length ? '' : 'none';
+  $('capsTxt').style.display = list.length ? '' : 'none';
+  $('outs').innerHTML = list.slice().reverse().map(f => `<div class="oc" data-f="${esc(f)}"><video controls preload="metadata" src="/clips/${encodeURIComponent(f)}"></video>
+    <a href="/clips/${encodeURIComponent(f)}" download>Descargar ${esc(f)}</a>
+    ${(notes || {})[f] ? `<div class="small">Cámara: ${esc(notes[f])}</div>` : ''}
+    ${(caps || {})[f] ? `<textarea rows="4" class="ocap">${esc(caps[f])}</textarea><button type="button" class="ocpy">Copiar caption</button>` : ''}
+    ${pubHtml()}
+    <button type="button" class="osave">Guardar en mi carpeta</button></div>`).join('');
+  document.querySelectorAll('.opub-btn').forEach(b => b.onclick = () => publishClip(b.closest('.oc')));
+  document.querySelectorAll('.oc video').forEach(makePlayer);
+  document.querySelectorAll('.ocpy').forEach(b => b.onclick = () => copyText(b.closest('.oc').querySelector('.ocap').value, b));
+  document.querySelectorAll('.osave').forEach(b => b.onclick = () => saveFiles([b.closest('.oc').dataset.f], b));
+  setStep(3);
+}
+async function saveFiles(files, btn) {
+  const m = $('saveMsg'), dir = $('outdir').value.trim();
+  if (!dir) { m.className = 'msg err'; m.textContent = 'Escribe primero la carpeta en «Carpeta donde guardar los clips» (arriba, en esta misma sección).'; return; }
+  if (btn) btn.disabled = true;
+  m.className = 'msg'; m.textContent = 'Guardando...';
+  const r = await post('/api/save', {job, files, outdir: dir});
+  if (btn) btn.disabled = false;
+  m.className = 'msg' + (r.error ? ' err' : '');
+  m.textContent = r.error || (r.saved ? '✓ Guardado en: ' + r.path + ' (captions.txt actualizado' + (r.nocap ? '; ' + r.nocap + ' clip(s) no tenían caption' : '') + ')' : 'Ese clip ya estaba guardado en esa carpeta.');
+}
+$('capsTxt').onclick = () => {
+  const rows = [...document.querySelectorAll('.oc')].reverse().map(x => {
+    const f = x.dataset.f, cap = x.querySelector('.ocap');
+    return f.replace(/\.mp4$/, '') + '\n' + ((cap && cap.value.trim()) || '(sin caption)') + '\n';
+  });
+  const blob = new Blob(['\ufeff' + rows.join('\n')], {type: 'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'captions.txt';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+$('saveAll').onclick = () => saveFiles([...document.querySelectorAll('.oc')].map(x => x.dataset.f), $('saveAll'));
+let failPolls = 0;
+async function poll(kind, onDone) {
+  const msg = $(kind === 'a' ? 'amsg' : 'rmsg'), box = $(kind === 'a' ? 'aprog' : 'rprog');
+  let j;
+  try { j = await (await fetch('/api/job/' + job)).json(); failPolls = 0; }
+  catch (e) {
+    msg.className = 'msg err'; msg.textContent = 'Se perdió la conexión con el programa. ¿Sigue abierta la ventana de app.py?';
+    if (++failPolls >= 3) { box.innerHTML = ''; onDone({state: 'error'}); return; }
+    return setTimeout(() => poll(kind, onDone), 3000);
+  }
+  msg.className = 'msg' + (j.state === 'error' ? ' err' : ''); msg.textContent = j.msg || '';
+  drawProg(j, box);
+  if (kind === 'r' && j.out && j.out.length) showOuts(j.out, j.caps, j.notes);
+  if (j.state === 'working' || j.state === 'rendering') { setTimeout(() => poll(kind, onDone), 1000); }
+  else { box.innerHTML = ''; onDone(j); }
+}
+async function health() {
+  try {
+    const h = await (await fetch('/api/health')).json(), el = $('engine');
+    el.textContent = h.state === 'cargando' ? 'Transcripción: probando la GPU... ' + h.el + ' s (la primera vez puede descargar el modelo)'
+      : h.dev === 'cuda' ? 'Transcripción: GPU lista ✓'
+      : h.dev === 'cpu' ? 'Transcripción: usando CPU (más lenta). ' + (h.note || '') : 'Transcripción no disponible. ' + (h.note || '');
+    if (h.state === 'cargando') setTimeout(health, 2000);
+  } catch (e) {}
+}
+
+let spkX = [], spkInfo = null, spkRep = [];
+function spkFrameUrl(i) { return `/api/frame?job=${job}&t=${spkInfo.people[i].reps[spkRep[i] % spkInfo.people[i].reps.length]}&r=${Date.now()}`; }
+function spkRender() {
+  $('vList').innerHTML = spkInfo.people.map((p, i) => `<div class="spk" data-i="${i}">
+      <div class="fr"><img src="${spkFrameUrl(i)}" alt=""><div class="mk"><b>Persona ${i + 1}</b></div></div>
+      <div class="btns"><b>Persona ${i + 1}</b><span class="small">habla el ${p.share}% del tiempo</span>
+        <button type="button" class="vplay">▶ Escuchar su voz</button>
+        <button type="button" class="vother">Otro momento</button></div></div>`).join('');
+  document.querySelectorAll('.spk').forEach(el => {
+    const i = +el.dataset.i, fr = el.querySelector('.fr'), mk = el.querySelector('.mk');
+    const place = () => { if (spkX[i] != null) { mk.style.display = 'block'; mk.style.left = (spkX[i] * 100) + '%'; } };
+    place();
+    fr.onclick = ev => { const r = fr.getBoundingClientRect(); spkX[i] = Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)); place(); spkMsg(); pvSchedule(200); };
+    el.querySelector('.vplay').onclick = () => {
+      const btn = el.querySelector('.vplay'), t = spkInfo.people[i].reps[spkRep[i] % spkInfo.people[i].reps.length];
+      if (window._spkAud) { window._spkAud.pause(); window._spkAud = null; }
+      btn.textContent = '🔊 Reproduciendo...';
+      const aud = window._spkAud = new Audio(`/api/audio_clip?job=${job}&t=${t}&r=${Date.now()}`);
+      aud.onended = aud.onerror = () => { btn.textContent = '▶ Escuchar su voz'; };
+      aud.play().catch(() => { btn.textContent = '▶ Escuchar su voz'; });
+    };
+    el.querySelector('.vother').onclick = () => { spkRep[i]++; spkX[i] = null; el.querySelector('img').src = spkFrameUrl(i); mk.style.display = 'none'; spkMsg(); };
+    el.querySelector('img').onload = place;
+  });
+  spkMsg();
+}
+function spkMsg() {
+  if (!spkInfo) return;
+  const miss = spkX.slice(0, spkInfo.k).filter(v => v == null).length;
+  const how = spkInfo.engine === 'básico' ? 'Usé el método básico (menos preciso): instala «pip install sherpa-onnx» y reinicia app.py. ' : '';
+  const how2 = spkInfo.auto ? `Detecté ${spkInfo.k} ${spkInfo.k === 1 ? 'voz' : 'voces'} (separación ${spkInfo.sil ?? '-'}). Si no es correcto, elige el número tú mismo y detecta otra vez. ` : '';
+  const hw = how + how2;
+  $('vMsg').textContent = spkInfo.k === 1 ? hw + 'Con una sola voz usa mejor «Automático (sigue la cara)».'
+    : hw + (miss ? `Haz clic sobre la persona que habla en cada foto (faltan ${miss}). Si en una foto se ve a otra persona hablando, pulsa «Otro momento».` : 'Listo. Mira la vista previa y mueve el momento del video para comprobar.');
+}
+$('vBtn').onclick = async () => {
+  if (!job) return;
+  $('vBtn').disabled = true; $('vMsg').textContent = 'Analizando las voces...';
+  try {
+    const r = await fetch('/api/speakers', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({job, k: +$('vk').value, start: clips[sel].start, end: clips[sel].end})});
+    const d0 = await r.json();
+    if (!r.ok) { $('vMsg').textContent = d0.error || 'No se pudieron analizar las voces.'; return; }
+    let d;
+    for (;;) {
+      await new Promise(ok => setTimeout(ok, 1000));
+      d = await (await fetch('/api/speakers_status?job=' + job)).json();
+      if (d.state === 'working') { $('vMsg').textContent = d.msg || 'Analizando las voces...'; continue; }
+      break;
+    }
+    if (d.state !== 'done') { $('vMsg').textContent = d.msg || 'No se pudieron analizar las voces.'; return; }
+    spkInfo = d.result; spkX = new Array(spkInfo.k).fill(null); spkRep = new Array(spkInfo.k).fill(0);
+    spkRender(); pvSchedule(200);
+  } catch (e) { $('vMsg').textContent = 'Error: ' + e; } finally { $('vBtn').disabled = false; }
+};
+$('spos').onchange = () => { if ($('spos').value) { $('sposY').value = $('spos').value; $('sposY').dispatchEvent(new Event('input', {bubbles: true})); $('sposY').dispatchEvent(new Event('change', {bubbles: true})); $('spos').value = ''; } };
+
+health();
+
+$('outTest').onclick = async () => {
+  const r = await post('/api/outdir', {base: $('outdir').value});
+  $('outMsg').className = 'msg' + (r.error ? ' err' : ''); $('outMsg').textContent = r.error || ('✓ Listo, se puede guardar en: ' + r.path);
+};
+
+/* ===== video de mi computadora ===== */
+let pcMode = localStorage.getItem('cl_srcmode') === 'pc';
+function setSrc(pc) {
+  pcMode = pc; localStorage.setItem('cl_srcmode', pc ? 'pc' : 'url');
+  $('srcUrl').classList.toggle('on', !pc); $('srcPc').classList.toggle('on', pc);
+  $('urlRow').style.display = pc ? 'none' : ''; $('pcRow').style.display = pc ? '' : 'none';
+  $('cookBox').style.display = pc ? 'none' : ''; $('liveChkRow').style.display = pc ? 'none' : '';
+  if (typeof syncLive === 'function') syncLive();
+}
+$('srcUrl').onclick = () => setSrc(false); $('srcPc').onclick = () => setSrc(true);
+$('pickPc').onclick = async () => {
+  $('pickPc').disabled = true; $('amsg').className = 'msg'; $('amsg').textContent = 'Abriendo la ventana para elegir el video...';
+  try {
+    const r = await post('/api/pick_video', {});
+    if (r.error) { $('amsg').className = 'msg err'; $('amsg').textContent = r.error; }
+    else { if (r.path) $('lpath').value = r.path; $('amsg').textContent = r.path ? '' : 'No elegiste ningún video.'; }
+  } catch (e) { $('amsg').className = 'msg err'; $('amsg').textContent = 'No pude abrir la ventana: ' + e; }
+  $('pickPc').disabled = false;
+};
+$('analyze').onclick = async () => {
+  if (pcMode && !$('lpath').value.trim()) { $('amsg').className = 'msg err'; $('amsg').textContent = 'Elige primero el video de tu computadora.'; return; }
+  $('analyze').disabled = true; $('candCard').style.display = 'none'; setStep(1);
+  const r = await post('/api/analyze', {url: $('url').value, context: $('ctxText').value, local: pcMode ? $('lpath').value.trim() : '', start: $('start').value, end: $('end').value, n: $('n').value,
+    min: $('min').value, max: $('max').value, flex: $('flex').checked, tags: $('capTags').checked, whisper: $('whisper').value, ai: $('ai').value, model: $('ai').value === 'gemini' ? $('model').value : $('modelOl').value, key: $('key').value, browser: $('browser').value});
+  if (r.error) { $('amsg').className = 'msg err'; $('amsg').textContent = r.error; $('analyze').disabled = false; return; }
+  job = r.id; poll('a', j => { $('analyze').disabled = false; if (j.state === 'ready') { showCands(j.clips, j.dur); showTimes(j.times); } });
+};
+async function copyText(t, btn) {
+  try { await navigator.clipboard.writeText(t); } catch (e) {
+    const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+  }
+  if (btn) { const o = btn.textContent; btn.textContent = '✓ Copiado'; setTimeout(() => btn.textContent = o, 1500); }
+}
+function showCands(list, dur) {
+  stopPvVideo();
+  clips = (list || []).map(c => ({title: c.title || 'Clip', start: r1(+c.start), end: r1(+c.end), score: c.score, reason: c.reason || '',
+    caption: c.caption || '', cam: '', on: true}));
+  srcDur = dur || 0; sel = 0; pvReady = true; pvCam = '';
+  $('candCard').style.display = ''; setStep(2);
+  $('prev').src = '/source/' + job;
+  $('vBtn').disabled = false; $('vMsg').textContent = 'Pulsa «Detectar voces».'; $('vList').innerHTML = ''; spkInfo = null; spkX = [];
+  if (!clips.length) { renderList(); $('pvMsg').textContent = 'La IA no sugirió clips.'; return; }
+  renderList(); fillClip(); setPvRange(clips[0]); loadSubPhrases(); pvSchedule(100);
+  $('candCard').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+$('render').onclick = async () => {
+  const items = clips.filter(c => c.on).map(c => ({title: c.title, start: c.start, end: c.end, caption: c.caption, cam: c.cam, opt: buildOpt(c)}));
+  if (!items.length) { $('rmsg').className = 'msg err'; $('rmsg').textContent = 'Marca al menos un clip.'; return; }
+  const bad = items.find(c => !(c.end - c.start >= 1));
+  if (bad) { $('rmsg').className = 'msg err'; $('rmsg').textContent = `En «${bad.title}» el fin debe ir después del inicio.`; return; }
+  renderBusy = true; renderList();
+  const opt = collectOpt(); opt.outdir = $('outdir').value.trim();
+  await post('/api/render', {job, clips: items, opt});
+  poll('r', j => {
+    renderBusy = false; renderList();
+    if (j.out && j.out.length) { showOuts(j.out, j.caps, j.notes); $('s3').scrollIntoView({behavior: 'smooth', block: 'start'}); }
+  });
+};
+
+/* ===== reproductor de la vista previa (reemplaza los controles nativos; el botón de video queda encima de la imagen) ===== */
+(() => {
+  const v = $('pvVid'), PLAY = 'M7 4.5v15l13-7.5z', PAUSE = 'M6 4h4v16H6zm8 0h4v16h-4z';
+  const MUTE_ON = 'M3 9v6h4l5 4V5L7 9zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z', MUTE_OFF = 'M3 9v6h4l5 4V5L7 9zm13 3 3-3-1.4-1.4-3 3-3-3L10.2 9l3 3-3 3 1.4 1.4 3-3 3 3L19 15z';
+  const fmt = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  function sync() {
+    const vidOn = v.style.display !== 'none';
+    const msgOn = getComputedStyle($('pvMsg')).display !== 'none';
+    $('pvPlay').classList.toggle('show', !vidOn && !msgOn && !$('pvVidBtn').disabled);
+    $('pvBar').classList.toggle('show', vidOn);
+  }
+  new MutationObserver(sync).observe(v, {attributes: true, attributeFilter: ['style']});
+  new MutationObserver(sync).observe($('pvMsg'), {attributes: true, attributeFilter: ['style']});
+  new MutationObserver(sync).observe($('pvVidBtn'), {attributes: true, attributeFilter: ['disabled']});
+  $('pvPlay').onclick = () => $('pvVidBtn').click();
+  $('pvRe').onclick = () => $('pvVidBtn').click();
+  const toggle = () => { if (v.paused) v.play().catch(() => {}); else v.pause(); };
+  $('pvTog').onclick = toggle; v.onclick = toggle;
+  v.addEventListener('play', () => $('pvTogI').setAttribute('d', PAUSE));
+  v.addEventListener('pause', () => $('pvTogI').setAttribute('d', PLAY));
+  v.addEventListener('timeupdate', () => { if (v.duration) { $('pvSeek').value = 1000 * v.currentTime / v.duration; } $('pvClock').textContent = fmt(v.currentTime); });
+  $('pvSeek').oninput = () => { if (v.duration) v.currentTime = v.duration * $('pvSeek').value / 1000; };
+  const volIcon = () => $('pvMuteI').setAttribute('d', (v.muted || v.volume === 0) ? MUTE_OFF : MUTE_ON);
+  $('pvMute').onclick = () => { v.muted = !v.muted; if (!v.muted && v.volume === 0) { v.volume = 0.5; } volIcon(); };
+  $('pvVol').oninput = () => { v.volume = $('pvVol').value / 100; v.muted = v.volume === 0; volIcon(); };
+  v.addEventListener('volumechange', () => { $('pvVol').value = v.muted ? 0 : v.volume * 100; volIcon(); });
+  $('pvFs').onclick = () => { const f = $('pvFrameBox'); if (document.fullscreenElement) document.exitFullscreen(); else f.requestFullscreen && f.requestFullscreen(); };
+  sync();
+})();
+
+/* ===== mismo reproductor para los clips generados ===== */
+function makePlayer(v) {
+  const I = {play: 'M7 4.5v15l13-7.5z', pause: 'M6 4h4v16H6zm8 0h4v16h-4z',
+    von: 'M3 9v6h4l5 4V5L7 9zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z', voff: 'M3 9v6h4l5 4V5L7 9zm13 3 3-3-1.4-1.4-3 3-3-3L10.2 9l3 3-3 3 1.4 1.4 3-3 3 3L19 15z'};
+  const svg = (p, id) => `<svg viewBox="0 0 24 24"><path ${id ? 'class="' + id + '" ' : ''}d="${p}"/></svg>`;
+  const fmt = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  v.removeAttribute('controls');
+  const box = document.createElement('div'); box.className = 'pvFrame';
+  v.parentNode.insertBefore(box, v); box.appendChild(v);
+  box.insertAdjacentHTML('beforeend', `<button type="button" class="pvPlay show" title="Reproducir">${svg(I.play)}Reproducir</button>
+    <div class="pvBar show"><button type="button" class="b-tog" title="Reproducir / pausar">${svg(I.play, 'i-tog')}</button>
+    <input type="range" class="b-seek" min="0" max="1000" value="0"><span class="clock">0:00</span>
+    <button type="button" class="b-mute" title="Sonido">${svg(I.von, 'i-mute')}</button><input type="range" class="b-vol vol" min="0" max="100" value="100" title="Volumen">
+    <button type="button" class="b-fs" title="Pantalla completa"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7zm-2-4h2V7h3V5H5zm12 7h-3v2h5v-5h-2zM14 5v2h3v3h2V5z"/></svg></button></div>`);
+  const q = s => box.querySelector(s), big = q('.pvPlay');
+  const toggle = () => { if (v.paused) v.play().catch(() => {}); else v.pause(); };
+  big.onclick = toggle; q('.b-tog').onclick = toggle; v.onclick = toggle;
+  v.addEventListener('play', () => { q('.i-tog').setAttribute('d', I.pause); big.classList.remove('show'); });
+  v.addEventListener('pause', () => { q('.i-tog').setAttribute('d', I.play); if (!v.ended || true) big.classList.add('show'); });
+  v.addEventListener('timeupdate', () => { if (v.duration) q('.b-seek').value = 1000 * v.currentTime / v.duration; q('.clock').textContent = fmt(v.currentTime); });
+  q('.b-seek').oninput = () => { if (v.duration) v.currentTime = v.duration * q('.b-seek').value / 1000; };
+  const icon = () => q('.i-mute').setAttribute('d', (v.muted || v.volume === 0) ? I.voff : I.von);
+  q('.b-mute').onclick = () => { v.muted = !v.muted; if (!v.muted && v.volume === 0) v.volume = 0.5; icon(); };
+  q('.b-vol').oninput = () => { v.volume = q('.b-vol').value / 100; v.muted = v.volume === 0; icon(); };
+  v.addEventListener('volumechange', () => { q('.b-vol').value = v.muted ? 0 : v.volume * 100; icon(); });
+  q('.b-fs').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else if (box.requestFullscreen) box.requestFullscreen(); };
+}
+
+/* ===== publicar en Facebook e Instagram ===== */
+function pubHtml() {
+  if (!soc.connected) return '<div class="small" style="margin-top:8px">Para publicar desde aquí, conecta tus redes (arriba).</div>';
+  const rows = soc.accounts.map((x, i) => `<div class="oacc" data-acc="${esc(x.id)}" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding:4px 0"><b style="min-width:120px">${esc(x.page)}</b>
+    <label style="flex-direction:row;gap:5px"><input type="checkbox" class="ofb" ${i === 0 ? 'checked' : ''}> Facebook</label>
+    <label style="flex-direction:row;gap:5px"><input type="checkbox" class="oig" ${x.has_ig ? (i === 0 ? 'checked' : '') : 'disabled'}> Instagram${x.has_ig ? ' @' + esc(x.ig) : ' (no vinculado)'}</label></div>`).join('');
+  return `<div class="opub" style="margin-top:8px"><div class="small">Publicar en:</div>${rows}
+    <button type="button" class="primary opub-btn" style="width:100%;margin-top:6px">Publicar ahora</button><div class="small opmsg" style="margin-top:4px"></div></div>`;
+}
+async function socStatus() {
+  try { soc = await (await fetch('/api/social/status')).json(); } catch (e) { soc = {connected: false, accounts: []}; }
+  const n = (soc.accounts || []).length, bad = (soc.accounts || []).some(x => x.missing && x.missing.length);
+  $('socOn').style.display = soc.connected ? '' : 'none';
+  if (soc.connected && !$('socOff1').dataset.adding) $('socOff1').style.display = 'none';
+  if (!soc.connected) { $('socOff1').style.display = ''; delete $('socOff1').dataset.adding; }
+  $('socSum').textContent = soc.connected ? 'Redes conectadas: ' + n + (n === 1 ? ' cuenta' : ' cuentas') + (bad ? ' ⚠ faltan permisos' : '') : 'Conectar Facebook e Instagram (para publicar desde aquí)';
+  $('socList').innerHTML = '';
+  (soc.accounts || []).forEach(x => {
+    const row = document.createElement('div'); row.className = 'row'; row.style.cssText = 'align-items:center;gap:10px;margin:4px 0';
+    const t = document.createElement('span'); t.className = 'grow';
+    t.textContent = 'Facebook: ' + (x.page || '—') + (x.has_ig ? ' · Instagram: @' + x.ig : ' · (sin Instagram vinculado)') + (x.missing && x.missing.length ? ' · ⚠ faltan permisos: ' + x.missing.join(', ') + ' (quita la cuenta y vuelve a conectarla con un token nuevo)' : '');
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Quitar';
+    b.onclick = async () => { if (!confirm('¿Quitar «' + (x.page || '') + '» de Clipear? Podrás volver a conectarla cuando quieras.')) return; await post('/api/social/disconnect', {id: x.id}); socStatus(); };
+    row.append(t, b); $('socList').appendChild(row);
+  });
+  if (lastOuts) { outsKey = ''; showOuts(...lastOuts); }
+}
+$('socAdd').onclick = () => { $('socOff1').dataset.adding = '1'; $('socOff1').style.display = ''; $('socPick').style.display = 'none'; $('socMsg').textContent = ''; };
+$('socGo').onclick = async () => {
+  $('socMsg').className = 'msg'; $('socMsg').textContent = 'Conectando con Meta...'; $('socGo').disabled = true;
+  const r = await post('/api/social/connect', {app_id: $('socAppId').value, app_secret: $('socSecret').value, token: $('socTok').value});
+  $('socGo').disabled = false;
+  if (r.error) { $('socMsg').className = 'msg err'; $('socMsg').textContent = r.error; return; }
+  $('socPages').innerHTML = '';
+  r.pages.forEach(p => {
+    const l = document.createElement('label'); l.style.cssText = 'flex-direction:row;gap:6px;align-items:center';
+    const c = document.createElement('input'); c.type = 'checkbox'; c.value = p.id; c.className = 'socPg'; c.checked = r.pages.length === 1;
+    l.append(c, document.createTextNode(' ' + p.name + (p.ig ? ' (Instagram @' + p.ig + ')' : ' (sin Instagram)')));
+    $('socPages').appendChild(l);
+  });
+  $('socPick').style.display = '';
+  let msg = 'Listo. Marca las Páginas que usarás.';
+  if (r.missing && r.missing.length) msg += ' ⚠ Al generar el token NO se concedieron estos permisos: ' + r.missing.join(', ') + '. Vuelve a generarlo marcándolos (y en la ventana de Facebook selecciona también tu cuenta de Instagram).';
+  else if (!r.pages.some(p => p.ig)) msg += ' ⚠ Ninguna Página muestra Instagram: la cuenta no está vinculada a esa Página (revisa la guía, sección «Instagram no aparece»).';
+  $('socMsg').textContent = msg;
+};
+$('socUse').onclick = async () => {
+  const ids = [...document.querySelectorAll('.socPg:checked')].map(c => c.value);
+  if (!ids.length) { $('socMsg').className = 'msg err'; $('socMsg').textContent = 'Marca al menos una Página.'; return; }
+  const r = await post('/api/social/select', {page_ids: ids});
+  if (r.error) { $('socMsg').className = 'msg err'; $('socMsg').textContent = r.error; return; }
+  $('socSecret').value = ''; $('socTok').value = ''; $('socPick').style.display = 'none'; $('socMsg').textContent = '';
+  delete $('socOff1').dataset.adding; socStatus();
+};
+async function publishClip(box) {
+  const f = box.dataset.f, m = box.querySelector('.opmsg'), btn = box.querySelector('.opub-btn');
+  const dests = [], names = [];
+  box.querySelectorAll('.oacc').forEach(r => {
+    const nm = r.querySelector('b').textContent;
+    if (r.querySelector('.ofb').checked) { dests.push({acc: r.dataset.acc, t: 'facebook'}); names.push(nm + ' (Facebook)'); }
+    if (r.querySelector('.oig').checked) { dests.push({acc: r.dataset.acc, t: 'instagram'}); names.push(nm + ' (Instagram)'); }
+  });
+  if (!dests.length) { m.className = 'small opmsg err'; m.textContent = 'Marca dónde quieres publicar.'; return; }
+  if (!confirm('¿Publicar «' + f + '» ahora en:\n• ' + names.join('\n• ') + '\n\nSe publicará de verdad.')) return;
+  btn.disabled = true; m.className = 'small opmsg'; m.textContent = 'Enviando...';
+  const r = await post('/api/social/publish', {job, file: f, caption: box.querySelector('.ocap') ? box.querySelector('.ocap').value : '', dests});
+  if (r.error) { m.className = 'small opmsg err'; m.textContent = r.error; btn.disabled = false; return; }
+  for (;;) {
+    await new Promise(ok => setTimeout(ok, 2000));
+    const s = await (await fetch('/api/social/publish_status?id=' + r.id)).json();
+    if (s.state === 'working') { m.textContent = s.msg; continue; }
+    m.className = 'small opmsg';
+    m.innerHTML = Object.values(s.res || {}).map(v => esc(v.label || '') + ': ' + (v.ok ? '✓ publicado' + (v.url ? ` — <a href="${esc(v.url)}" target="_blank" rel="noopener">ver</a>` : '') : '<span class="err">' + esc(v.msg) + '</span>')).join('<br>');
+    break;
+  }
+  btn.disabled = false;
+}
+socStatus();
+
+
+/* ===== alcance de los ajustes (todos los clips / solo este clip), cámara manual, streamer y voces por clip ===== */
+const GROUPS = {
+  cam: ['srcQual','sharpOn','ultraEnc','ratio','cratio','mode','lfg','lfgc','lscaleFg','lposY','lbg','lbgc','lblur','splitMode','splitOrder','spTopX','spBotX','track','abAx','abBx','abTr','panx','stCam','stGame','stLayout','stCamPos','stCamH','stPip','stPos','stFit'],
+  subs: ['subOn','font','size','color','ocolor','outline','hlOn','hl','sposY','sposX','swidth','smaxw','upper'],
+  title: ['titOn','titSize','titY','titX','titW','titStyle'],
+  brand: ['logoOn','lpos','lx','ly','lscale','lop','badgeOn','badgePlat','badgeUser','badgePos','bx','by','badgeScale','badgeOp','textOn','tval','tcolor','tsize','top','tpos','tx','ty']
+};
+if (!['speaker','ab','voice','manual','center'].includes($('track').value)) $('track').value = 'speaker';  // «inteligente», «sigue la cara» y «hablante automático» ahora son una sola
+const glob = {};
+const snapG = g => { const s = {}; GROUPS[g].forEach(id => { const e = $(id); s[id] = e.type === 'checkbox' ? e.checked : e.value; }); if (g === 'brand') s._logo = logoSel; return s; };
+const restoreG = (g, s) => {
+  GROUPS[g].forEach(id => { if (!(id in s)) return; const e = $(id); if (e.type === 'checkbox') e.checked = !!s[id]; else e.value = s[id]; });
+  if (g === 'brand' && '_logo' in s) { logoSel = s._logo; document.querySelectorAll('.lg').forEach(e => e.classList.toggle('sel', e.dataset.n === logoSel)); }
+};
+const GROUP_OF = {}; Object.entries(GROUPS).forEach(([g, ids]) => ids.forEach(id => GROUP_OF[id] = g));
+const ensureGlob = () => Object.keys(GROUPS).forEach(g => { if (!glob[g]) glob[g] = snapG(g); });
+function refreshScope() {
+  const c = clips[sel];
+  document.querySelectorAll('.scope').forEach(sc => {
+    const own = !!(c && c.own && c.own[sc.dataset.g]);
+    sc.classList.toggle('own', own);
+    sc.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.s === 'clip') === own));
+  });
+}
+Object.keys(GROUP_OF).forEach(id => {
+  const e = $(id); if (!e) return;
+  const upd = () => {
+    ensureGlob(); const g = GROUP_OF[id], c = clips[sel];
+    if (c && c.own && c.own[g]) { c.own[g] = snapG(g); if (id in glob[g]) localStorage.setItem('cl_' + id, typeof glob[g][id] === 'boolean' ? (glob[g][id] ? '1' : '0') : glob[g][id]); renderList(); }
+    else glob[g] = snapG(g);
+    if (id.startsWith('tit') || id.startsWith('st')) pvSchedule(300);
+  };
+  e.addEventListener('input', upd); e.addEventListener('change', upd);
+});
+document.querySelectorAll('.scope button').forEach(b => b.onclick = () => {
+  const c = clips[sel]; if (!c) return; ensureGlob();
+  const g = b.closest('.scope').dataset.g;
+  if (b.dataset.s === 'clip') { c.own = c.own || {}; c.own[g] = snapG(g); }
+  else if (c.own) { delete c.own[g]; restoreG(g, glob[g]); syncTrack(); }
+  refreshScope(); renderList(); pvSchedule(100);
+});
+let spkOwner = null;
+function applyClipCtl() {
+  const c = clips[sel]; if (!c) return; ensureGlob();
+  Object.keys(GROUPS).forEach(g => restoreG(g, (c.own && c.own[g]) || glob[g]));
+  syncTrack(); refreshScope();
+  $('cOvText').value = c.ovText != null ? c.ovText : c.title;
+  // voces: cada clip tiene las suyas
+  if (spkOwner != null && clips[spkOwner]) Object.assign(clips[spkOwner], {spkInfo, spkX, spkRep});
+  spkOwner = sel; spkInfo = c.spkInfo || null; spkX = c.spkX || []; spkRep = c.spkRep || [];
+  if (spkInfo) spkRender(); else { $('vList').innerHTML = ''; $('vMsg').textContent = job ? 'Aún no detectaste las voces de este clip.' : 'Primero analiza un video.'; }
+  manStop(); keysRender(); syncPan(); stDraw();
+}
+$('cOvText').oninput = () => { clips[sel].ovText = $('cOvText').value; pvSchedule(400); };
+$('cOvReset').onclick = () => { const c = clips[sel]; c.ovText = null; $('cOvText').value = c.title; pvSchedule(100); };
+$('cTitle').addEventListener('input', () => { const c = clips[sel]; if (c && c.ovText == null) { $('cOvText').value = c.title; pvSchedule(500); } });
+
+function titleSpec(c) {
+  if (!$('titOn').checked) return null;
+  const text = String(c.ovText != null ? c.ovText : c.title).trim(); if (!text) return null;
+  const size = +$('titSize').value, wMax = 1080 * (+$('titW').value) / 100, style = $('titStyle').value;
+  const font = `800 ${size}px "Arial Black", "Segoe UI Black", Arial, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+  const g0 = document.createElement('canvas').getContext('2d'); g0.font = font;
+  const padX = size * 0.5, padY = size * 0.16, lineH = size * 1.22, lines = [];
+  text.split('\n').forEach(par => {
+    let cur = '';
+    par.split(/\s+/).filter(Boolean).forEach(w => {
+      const test = cur ? cur + ' ' + w : w;
+      if (cur && g0.measureText(test).width > wMax - 2 * padX) { lines.push(cur); cur = w; } else cur = test;
+    });
+    if (cur) lines.push(cur);
+  });
+  if (!lines.length) return null;
+  const widths = lines.map(l => g0.measureText(l).width), M = 8;
+  const cw = Math.ceil(Math.max(...widths) + 2 * padX + 2 * M), ch = Math.ceil(lines.length * lineH + 2 * padY + 2 * M);
+  const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+  const g = cv.getContext('2d'); g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+  const col = {white: ['#ffffff', '#111111'], black: ['#111111', '#ffffff'], yellow: ['#ffd600', '#111111'], none: [null, '#ffffff']}[style] || ['#ffffff', '#111111'];
+  const rr = (x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
+  if (col[0]) {
+    g.fillStyle = col[0];
+    lines.forEach((l, i) => { const w = widths[i] + 2 * padX, h = lineH + 2 * padY; rr(cw / 2 - w / 2, M + i * lineH, w, h, size * 0.42); g.fill(); });
+  }
+  lines.forEach((l, i) => {
+    const y = M + padY + i * lineH + lineH / 2;
+    if (!col[0]) { g.lineWidth = size * 0.16; g.strokeStyle = '#000'; g.strokeText(l, cw / 2, y); }
+    g.fillStyle = col[1]; g.fillText(l, cw / 2, y);
+  });
+  return {png: cv.toDataURL('image/png'), y: +$('titY').value, x: +$('titX').value};
+}
+
+function canvasWH() {
+  let r = $('ratio').value; if (r === 'custom') r = $('cratio').value;
+  const P = {'9:16': [1080, 1920], '3:4': [1080, 1440], '4:5': [1080, 1350], '1:1': [1080, 1080], '4:3': [1440, 1080], '16:9': [1920, 1080]};
+  if (P[r]) return P[r];
+  const [a, b] = String(r).split(':').map(Number); if (!(a > 0 && b > 0)) return P['9:16'];
+  const k = Math.min(3, Math.max(1 / 3, b / a)); return a > b ? [1920, Math.round(1920 * k)] : [1080, Math.round(1080 * k)];
+}
+// ajustes completos de un clip (sus ajustes propios donde los tenga, los generales en el resto) + título, voces y tramos manuales
+function buildOpt(c) {
+  ensureGlob();
+  const cur = {}; Object.keys(GROUPS).forEach(g => cur[g] = snapG(g));
+  Object.keys(GROUPS).forEach(g => restoreG(g, (c.own && c.own[g]) || glob[g]));
+  syncTrack();
+  const o = collectOpt(); o.title = titleSpec(c);
+  o.track.speakers = (c === clips[sel] ? spkX : (c.spkX || [])).slice();
+  o.track.keys = (c.keys || []).map(k => ({t: k.t, x: k.x, tr: k.tr || 'cut', d: k.d || 0}));
+  o.stream = {cam: $('stCam').value.split(',').map(Number), game: $('stGame').value.split(',').map(Number), layout: $('stLayout').value,
+    camPos: $('stCamPos').value, camh: +$('stCamH').value, pip: +$('stPip').value, pos: $('stPos').value, fit: $('stFit').value};
+  Object.keys(GROUPS).forEach(g => restoreG(g, cur[g])); syncTrack();
+  return o;
+}
+
+/* --- panel de seguimiento --- */
+const TRACK_HELP = {
+  speaker: 'Mira qué boca se mueve mientras alguien habla y enfoca a esa persona; si hay varias, corta de una a otra.',
+  ab: 'Marcas dos sitios fijos (Persona A y Persona B) y la cámara alterna automáticamente entre esos dos puntos cuando cada uno habla.',
+  voice: 'Usa la huella de voz para saber quién habla: detectas las voces de este clip y marcas dónde está cada persona.',
+  manual: 'Tú marcas dónde enfoca la cámara al inicio y agregas cortes en los segundos donde quieras cambiar de persona.',
+  center: 'Deja el centro del video fijo, sin seguir a nadie.'
+};
+function cropBoxPct() {
+  const [W, H] = canvasWH();
+  return Math.min(90, Math.max(18, Math.round((W / H) / (16 / 9) * 100)));
+}
+function loadPickFrame(imgEl) {
+  if (!job) return;
+  const t = (+$('pvT').value || 0).toFixed(2);
+  imgEl.src = `/api/frame?job=${job}&t=${t}&r=${Date.now()}`;
+}
+function updAbBoxes() {
+  const w = cropBoxPct();
+  if ($('abBoxA')) { $('abBoxA').style.left = $('abAx').value + '%'; $('abBoxA').style.width = w + '%'; }
+  if ($('abBoxB')) { $('abBoxB').style.left = $('abBx').value + '%'; $('abBoxB').style.width = w + '%'; }
+}
+const _sync0 = syncTrack;
+syncTrack = function () {
+  _sync0();
+  const md = $('mode').value, tr = $('track').value, crop = md === 'crop' || md === 'frame';
+  $('streamBox').style.display = md === 'streamer' ? '' : 'none';
+  $('abBox').style.display = crop && tr === 'ab' ? '' : 'none';
+  $('manualBox').style.display = crop && tr === 'manual' ? '' : 'none';
+  $('panBox').style.display = '';
+  $('trackHelp').textContent = TRACK_HELP[tr] || '';
+  const pip = $('stLayout').value === 'pip';
+  $('stCamPosBox').style.display = $('stCamHBox').style.display = pip ? 'none' : '';
+  $('stPipBox').style.display = $('stPosBox').style.display = pip ? '' : 'none';
+  const spMan = md === 'split' && $('splitMode').value === 'manual';
+  $('splitManualBox').style.display = spMan ? '' : 'none';
+  $('splitOrderBox').style.display = spMan ? 'none' : '';
+  if (crop && tr === 'ab' && job && !$('abImg').dataset.loaded) { $('abImg').dataset.loaded = '1'; loadPickFrame($('abImg')); }
+  if (crop && tr === 'manual' && job) { manVidInit(); if (!$('manImg').dataset.loaded) { $('manImg').dataset.loaded = '1'; loadPickFrame($('manImg')); } }
+  if (spMan && job && !$('spImg').dataset.loaded) { $('spImg').dataset.loaded = '1'; loadPickFrame($('spImg')); }
+  updAbBoxes();
+  updSplitBoxes();
+};
+syncTrack();
+$('abLoadFrame').onclick = () => loadPickFrame($('abImg'));
+$('abPick').addEventListener('pointerdown', e => {
+  const r = $('abPick').getBoundingClientRect(), pct = Math.round(clamp01((e.clientX - r.left) / r.width) * 100);
+  const which = document.querySelector('input[name=abTarget]:checked').value;
+  const id = which === 'a' ? 'abAx' : 'abBx';
+  $(id).value = pct; $(id).dispatchEvent(new Event('change', {bubbles: true}));
+  updAbBoxes(); pvSchedule(150);
+});
+const clamp01 = v => Math.min(1, Math.max(0, v));
+const relT = () => clips[sel] ? Math.max(0, +$('pvT').value - clips[sel].start) : 0;
+const clipDur = () => clips[sel] ? Math.max(0, clips[sel].end - clips[sel].start) : 0;
+function activeKey() { const c = clips[sel]; if (!c || !c.keys) return -1; const r = relT(); let a = -1; c.keys.forEach((k, i) => { if (k.t <= r + 0.05 && (a < 0 || k.t >= c.keys[a].t)) a = i; }); return a; }
+function getPos() { const c = clips[sel], a = activeKey(); return a >= 0 ? c.keys[a].x : +$('panx').value / 100; }
+// posición de la cámara en un instante (con el paneo suave), igual que el render; solo para dibujar el recuadro al reproducir
+function camPosAt(rel) {
+  const c = clips[sel]; let from = +$('panx').value / 100; if (!c || !c.keys) return from;
+  for (const k of c.keys) {
+    if (rel < k.t) break;
+    const dur = k.d || (k.tr === 'pan' ? 0.45 : 0.02), u = clamp01((rel - k.t) / dur);
+    if (u < 1) return from + (k.x - from) * u * u * (3 - 2 * u);
+    from = k.x;
+  }
+  return from;
+}
+const inManual = () => !!clips[sel] && $('manualBox').offsetParent !== null;
+function updManBox() {
+  const c = clips[sel], v = $('manVid'), playing = v && manOk() && !v.paused;
+  const x = playing ? camPosAt(relT()) : getPos(), w = cropBoxPct(), b = $('manBox'), a = activeKey();
+  if (b) { b.style.left = (x * 100) + '%'; b.style.width = w + '%'; }
+  if ($('manBoxLbl')) { $('manBoxLbl').textContent = a >= 0 ? `Toma ${a + 2}` : 'Toma 1 (Inicio)'; }
+  if ($('manCurT')) { $('manCurT').textContent = fmtClip(relT()); }
+  const hd = $('tlHead'), d = clipDur(); if (hd && d > 0) hd.style.left = (100 * Math.min(1, relT() / d)) + '%';
+}
+function syncPan() { if (clips[sel]) { $('panNow').value = Math.round(getPos() * 100); updManBox(); keysRender(); } }
+function setPos(x) {
+  const c = clips[sel]; if (!c) return; x = clamp01(x); const a = activeKey();
+  if (a >= 0) { c.keys[a].x = x; delete c.keys[a].d; keysRender(); }
+  else { $('panx').value = Math.round(x * 100); $('panx').dispatchEvent(new Event('change', {bubbles: true})); }
+  $('panNow').value = Math.round(x * 100); updManBox(); pvSchedule(250);
+}
+$('panNow').addEventListener('input', () => setPos(+$('panNow').value / 100));
+
+/* --- deshacer (por clip) --- */
+const keyHist = new WeakMap();
+function keysPush() {
+  const c = clips[sel]; if (!c) return; const h = keyHist.get(c) || [];
+  h.push(JSON.stringify({keys: c.keys || [], doubt: c.doubt || [], x: $('panx').value})); if (h.length > 40) h.shift(); keyHist.set(c, h);
+}
+function keysUndo() {
+  const c = clips[sel]; if (!c) return; const s = (keyHist.get(c) || []).pop(); if (!s) { $('camMsg').textContent = 'No hay nada que deshacer.'; return; }
+  const o = JSON.parse(s); c.keys = o.keys; c.doubt = o.doubt; $('panx').value = o.x; $('panx').dispatchEvent(new Event('change', {bubbles: true}));
+  keysRender(); syncPan(); pvSchedule(150);
+}
+
+/* --- video de la toma (se reproduce el original, sin esperar a ffmpeg) --- */
+const manOk = () => $('manVid').dataset.ok === '1';
+let manRaf = 0, manRec = false;
+function manVidInit() {
+  const v = $('manVid'); if (!job || v.dataset.job === job) return;
+  v.dataset.job = job; v.dataset.ok = ''; v.src = `/source/${job}`; v.load();
+}
+$('manVid').addEventListener('loadedmetadata', () => { const v = $('manVid'); v.dataset.ok = '1'; v.style.display = 'block'; $('manImg').style.display = 'none'; seekMan(); updManBox(); });
+$('manVid').addEventListener('error', () => { const v = $('manVid'); v.dataset.ok = ''; v.style.display = 'none'; $('manImg').style.display = 'block'; loadPickFrame($('manImg')); });
+function seekMan() { if (manOk()) { try { $('manVid').currentTime = +$('pvT').value; } catch (e) { /* aún sin cargar */ } } }
+function manLabels() {
+  const play = manOk() && !$('manVid').paused;
+  $('manPlayBtn').textContent = play ? '⏸ Pausar' : '▶ Reproducir';
+  $('manRec').textContent = manRec ? '■ Detener grabación' : '● Grabar cortes';
+  $('manRec').classList.toggle('primary', manRec);
+}
+function manTick() {
+  const v = $('manVid'), c = clips[sel]; if (!c || v.paused) return;
+  if (v.currentTime >= c.end - 0.03) { if (manRec) { manStop(); return; } v.currentTime = c.start; }
+  $('pvT').value = Math.min(c.end, Math.max(c.start, v.currentTime)); updPvTime(); updManBox();
+  manRaf = requestAnimationFrame(manTick);
+}
+function manPlay() {
+  const c = clips[sel], v = $('manVid'); if (!c) return;
+  if (!manOk()) { $('camMsg').textContent = 'El navegador no puede reproducir este video; usa la barra «Momento del clip» para moverte.'; return; }
+  if (v.currentTime < c.start - 0.1 || v.currentTime >= c.end - 0.05) v.currentTime = c.start;
+  v.play().then(() => { manLabels(); cancelAnimationFrame(manRaf); manRaf = requestAnimationFrame(manTick); }).catch(() => {});
+}
+function manStop() {
+  const was = manRec || (manOk() && !$('manVid').paused); manRec = false;
+  cancelAnimationFrame(manRaf); if ($('manVid').pause) $('manVid').pause(); manLabels();
+  if ($('camMsg').textContent.startsWith('Grabando')) $('camMsg').textContent = 'Grabación terminada: revisa las tomas en la línea de tiempo y corrige lo que haga falta.';
+  if (was && clips[sel]) { syncPan(); pvSchedule(150); }
+}
+$('manPlayBtn').onclick = () => { if (manOk() && !$('manVid').paused) manStop(); else manPlay(); };
+$('manRec').onclick = () => {
+  if (manRec) { manStop(); return; }
+  const c = clips[sel]; if (!c || !manOk()) { manPlay(); return; }
+  manRec = true; $('manVid').currentTime = c.start; $('pvT').value = c.start; manPlay(); manLabels();
+  $('camMsg').textContent = 'Grabando: toca 1, 2 o 3 cuando cambie quien habla. Se detiene sola al final del clip.';
+};
+
+/* --- cortes: crear, mover, quitar --- */
+const camPresets = [0.28, 0.72, 0.5];
+function presetsRender() {
+  $('manPresets').innerHTML = camPresets.map((x, i) => `<span class="pre"><button type="button" class="preGo" data-i="${i}" title="Cambiar la cámara a esta posición en el momento actual (tecla ${i + 1})"><b>${i + 1}</b> · ${Math.round(x * 100)}%</button><button type="button" class="preSet" data-i="${i}" title="Guardar en este botón la posición actual del recuadro">⌖</button></span>`).join('');
+}
+$('manPresets').addEventListener('click', e => {
+  const g = e.target.closest('.preGo'), s = e.target.closest('.preSet');
+  if (g) addKeyAt(camPresets[+g.dataset.i]);
+  if (s) { camPresets[+s.dataset.i] = getPos(); presetsRender(); }
+});
+presetsRender();
+function addKeyAt(x, rel = relT(), tr = 'cut') {
+  const c = clips[sel]; if (!c) return; c.keys = c.keys || []; keysPush();
+  if (rel < 0.2) { $('panx').value = Math.round(x * 100); $('panx').dispatchEvent(new Event('change', {bubbles: true})); }
+  else {
+    const t = Math.min(Math.max(0.2, Math.round(rel * 10) / 10), Math.max(0.2, clipDur() - 0.2)), near = c.keys.findIndex(k => Math.abs(k.t - t) < 0.4);
+    if (near >= 0) { c.keys[near].x = x; delete c.keys[near].d; } else c.keys.push({t, x, tr});
+    c.keys.sort((p, q) => p.t - q.t);
+  }
+  keysRender(); syncPan(); if (!manRec) pvSchedule(150);
+}
+$('keyAdd').onclick = () => addKeyAt(getPos());
+$('keyUndo').onclick = keysUndo;
+$('keyClear').onclick = () => { const c = clips[sel]; if (!c || !(c.keys || []).length) return; keysPush(); c.keys = []; c.doubt = []; keysRender(); syncPan(); pvSchedule(150); };
+
+$('camAuto').onclick = async () => {
+  const c = clips[sel]; if (!c || !job) { $('camMsg').textContent = 'Primero analiza un video y elige un clip.'; return; }
+  if ((c.keys || []).length && !confirm('Esto reemplaza las tomas actuales de este clip por las de la cámara automática. Puedes volver atrás con «Deshacer». ¿Continuar?')) return;
+  const b = $('camAuto'), msg = $('camMsg'); b.disabled = true; manStop();
+  msg.textContent = 'Analizando caras y voces de este clip... puede tardar unos segundos.';
+  try {
+    const r = await post('/api/cam_plan', {job, start: c.start, end: c.end, opt: buildOpt(c)});
+    if (r.error) { msg.textContent = r.error; return; }
+    keysPush(); c.keys = r.keys || []; c.doubt = r.doubt || [];
+    $('panx').value = Math.round(r.x0 * 100); $('panx').dispatchEvent(new Event('change', {bubbles: true}));
+    msg.textContent = `Listo: ${c.keys.length} cambio(s) traídos de la cámara automática.` + (c.doubt.length ? ` Hay ${c.doubt.length} tramo(s) dudoso(s) en rojo: revísalos.` : ' No hubo tramos sin cara.');
+    keysRender(); syncPan(); pvSchedule(150);
+  } catch (e) { msg.textContent = 'Error: ' + e; } finally { b.disabled = false; }
+};
+
+/* --- línea de tiempo --- */
+const segColor = x => `hsl(${Math.round(42 + 168 * clamp01(x))} 55% 38%)`;
+function keysRender() {
+  const c = clips[sel]; if (!c) return; const ks = c.keys || [], a = activeKey(), dur = Math.max(0.1, clipDur());
+  const pct = t => (100 * Math.min(dur, Math.max(0, t)) / dur);
+  const bounds = [0, ...ks.map(k => k.t), dur], xs = [+$('panx').value / 100, ...ks.map(k => k.x)];
+  let h = xs.map((x, i) => `<div class="tlSeg${a === i - 1 ? ' on' : ''}" style="left:${pct(bounds[i]).toFixed(2)}%;width:${(pct(bounds[i + 1]) - pct(bounds[i])).toFixed(2)}%;background:${segColor(x)}"><span>${i + 1}</span></div>`).join('');
+  h += (c.doubt || []).map(([p, q]) => `<div class="tlDoubt" style="left:${pct(p).toFixed(2)}%;width:${(pct(q) - pct(p)).toFixed(2)}%" title="Aquí no se vio ninguna cara"></div>`).join('');
+  h += ks.map((k, i) => `<div class="tlKey" data-i="${i}" style="left:${pct(k.t).toFixed(2)}%" title="Arrastra para mover · ${fmtClip(k.t)}"></div>`).join('');
+  h += `<div class="tlHead" id="tlHead" style="left:${pct(relT()).toFixed(2)}%"></div>`;
+  $('camTl').innerHTML = h;
+  $('tlRuler').innerHTML = `<span>0:00</span><span>${fmtClip(dur / 2)}</span><span>${fmtClip(dur)}</span>`;
+  const k = a >= 0 ? ks[a] : null, t0 = k ? k.t : 0, t1 = a + 1 < ks.length ? ks[a + 1].t : dur, r = relT();
+  const dub = (c.doubt || []).some(([p, q]) => r >= p && r <= q);
+  $('keysList').innerHTML = `<div class="keyRow" style="padding:5px 0"><span class="small" style="flex:1"><b>Toma ${a + 2}</b> · ${fmtClip(t0)} → ${fmtClip(t1)} · enfoca al ${Math.round((k ? k.x : +$('panx').value / 100) * 100)}%</span>` +
+    (k ? `<select class="ktr" style="padding:3px 22px 3px 6px;font-size:12px"><option value="cut" ${(k.tr || 'cut') === 'cut' ? 'selected' : ''}>Corte seco</option><option value="pan" ${k.tr === 'pan' ? 'selected' : ''}>Paneo suave</option></select><button type="button" class="kdel">Quitar este corte</button>` : '<span class="small">Toma inicial (no se puede quitar)</span>') +
+    `</div>` + (dub ? '<div class="small err">⚠ Aquí no se detectó ninguna cara: comprueba que el recuadro apunte a la persona correcta.</div>' : '');
+  const kt = $('keysList').querySelector('.ktr'); if (kt) kt.onchange = e => { keysPush(); k.tr = e.target.value; delete k.d; pvSchedule(150); };
+  const kd = $('keysList').querySelector('.kdel'); if (kd) kd.onclick = () => { keysPush(); ks.splice(a, 1); syncPan(); pvSchedule(150); };
+}
+(() => {
+  const tl = $('camTl'); let mode = null, idx = -1;
+  const relFrom = ev => { const r = tl.getBoundingClientRect(); return clamp01((ev.clientX - r.left) / r.width) * clipDur(); };
+  const seek = rel => { const c = clips[sel]; if (!c) return; $('pvT').value = c.start + rel; updPvTime(); seekMan(); syncPan(); };
+  tl.addEventListener('pointerdown', ev => {
+    if (!clips[sel]) return; tl.setPointerCapture(ev.pointerId); ev.preventDefault();
+    const kEl = ev.target.closest('.tlKey');
+    if (kEl) { mode = 'key'; idx = +kEl.dataset.i; keysPush(); } else { mode = 'seek'; seek(relFrom(ev)); }
+  });
+  tl.addEventListener('pointermove', ev => {
+    const c = clips[sel]; if (!mode || !c) return;
+    if (mode === 'seek') { seek(relFrom(ev)); return; }
+    const ks = c.keys, lo = idx > 0 ? ks[idx - 1].t + 0.2 : 0.2, hi = idx + 1 < ks.length ? ks[idx + 1].t - 0.2 : clipDur() - 0.2;
+    ks[idx].t = Math.min(Math.max(lo, Math.round(relFrom(ev) * 10) / 10), Math.max(lo, hi));
+    seek(ks[idx].t + 0.05);
+  });
+  const end = () => { if (mode === 'key') pvSchedule(150); mode = null; };
+  tl.addEventListener('pointerup', end); tl.addEventListener('pointercancel', end);
+  tl.addEventListener('dblclick', ev => { if (clips[sel] && !ev.target.closest('.tlKey')) { const rel = relFrom(ev); addKeyAt(camPosAt(rel), rel); } });
+})();
+document.addEventListener('keydown', e => {
+  if (!inManual()) return;
+  const t = e.target, tag = (t.tagName || '').toLowerCase(), isRange = tag === 'input' && t.type === 'range';
+  if (t.isContentEditable || tag === 'textarea' || tag === 'select' || (tag === 'input' && !isRange)) return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); keysUndo(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key >= '1' && e.key <= '3') { e.preventDefault(); addKeyAt(camPresets[+e.key - 1]); }
+  else if (e.key === ' ' && !isRange && tag !== 'button') { e.preventDefault(); $('manPlayBtn').click(); }
+  else if (e.key === 'Delete' && tag !== 'button') { const a = activeKey(), c = clips[sel]; if (a >= 0) { e.preventDefault(); keysPush(); c.keys.splice(a, 1); syncPan(); pvSchedule(150); } }
+});
+$('pvT').addEventListener('input', () => { seekMan(); syncPan(); if (!manOk() && $('mode').value === 'crop' && $('track').value === 'manual') loadPickFrame($('manImg')); });
+$('manPick').addEventListener('pointerdown', e => {
+  const r = $('manPick').getBoundingClientRect();
+  setPos((e.clientX - r.left) / r.width);
+});
+function updSplitBoxes() {
+  const [W, H] = canvasWH(), w = Math.min(90, Math.max(18, Math.round((W / (H / 2)) / (16 / 9) * 100)));
+  if ($('spBoxTop')) { $('spBoxTop').style.left = $('spTopX').value + '%'; $('spBoxTop').style.width = w + '%'; }
+  if ($('spBoxBot')) { $('spBoxBot').style.left = $('spBotX').value + '%'; $('spBoxBot').style.width = w + '%'; }
+}
+$('spLoadFrame').onclick = () => loadPickFrame($('spImg'));
+$('spPick').addEventListener('pointerdown', e => {
+  const r = $('spPick').getBoundingClientRect(), pct = Math.round(clamp01((e.clientX - r.left) / r.width) * 100);
+  const which = document.querySelector('input[name=spTarget]:checked').value;
+  const id = which === 'top' ? 'spTopX' : 'spBotX';
+  $(id).value = pct; $(id).dispatchEvent(new Event('change', {bubbles: true}));
+  updSplitBoxes(); pvSchedule(150);
+});
+// arrastrar la vista previa para mover la cámara (solo en modo manual)
+(() => {
+  const img = $('pvImg'); let drag = null;
+  const canDrag = () => ($('mode').value === 'crop' || ($('mode').value === 'frame' && $('lfg').value !== 'orig')) && $('track').value === 'manual' && clips[sel];
+  img.addEventListener('pointerdown', e => { if (!canDrag()) return; drag = {x: e.clientX, pos: getPos()}; img.setPointerCapture(e.pointerId); e.preventDefault(); });
+  img.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const [W, H] = canvasWH(); let tw = W, th = H;
+    if ($('mode').value === 'frame') {
+      let r = $('lfg').value === 'custom' ? $('lfgc').value : $('lfg').value; const [a, b] = r.split(':').map(Number);
+      tw = W * (+$('lscaleFg').value) / 100; th = Math.min(H, tw * (b / a));
+    }
+    const range = th * (16 / 9) - tw; if (range <= 0) return;  // se asume video de origen 16:9
+    setPos(drag.pos - ((e.clientX - drag.x) / img.clientWidth) * W / range);
+  });
+  const end = () => { drag = null; };
+  img.addEventListener('pointerup', end); img.addEventListener('pointercancel', end);
+  img.addEventListener('mouseenter', () => img.classList.toggle('drag', !!canDrag()));
+})();
+
+/* --- modo streamer: dibujar las dos zonas sobre un fotograma --- */
+const parseRect = s => { const v = String(s).split(',').map(Number); return v.length === 4 && v.every(isFinite) ? v : null; };
+function stDraw() {
+  [['cam', 'stCam'], ['game', 'stGame']].forEach(([k, id]) => {
+    const v = parseRect($(id).value), el = $('rc_' + k);
+    if (!v) { el.style.display = 'none'; return; }
+    el.style.cssText = `display:block;left:${v[0] * 100}%;top:${v[1] * 100}%;width:${v[2] * 100}%;height:${v[3] * 100}%`;
+  });
+}
+function stLoadFrame() { if (job) $('stImg').src = `/api/frame?job=${job}&t=${(+$('pvT').value || 0).toFixed(1)}&r=${Date.now()}`; }
+$('stLoad').onclick = stLoadFrame;
+$('stImg').addEventListener('load', stDraw);
+(() => {
+  const w = $('stWrap'); let st = null;
+  const pt = e => { const r = w.getBoundingClientRect(); return [clamp01((e.clientX - r.left) / r.width), clamp01((e.clientY - r.top) / r.height)]; };
+  const target = () => document.querySelector('input[name=stTarget]:checked').value === 'cam' ? 'stCam' : 'stGame';
+  w.addEventListener('pointerdown', e => { st = {a: pt(e), id: target()}; w.setPointerCapture(e.pointerId); e.preventDefault(); });
+  w.addEventListener('pointermove', e => {
+    if (!st) return; const b = pt(e);
+    const x = Math.min(st.a[0], b[0]), y = Math.min(st.a[1], b[1]), ww = Math.abs(b[0] - st.a[0]), hh = Math.abs(b[1] - st.a[1]);
+    $(st.id).value = [x, y, ww, hh].map(v => v.toFixed(4)).join(','); stDraw();
+  });
+  const end = () => { if (!st) return; const id = st.id; st = null; const v = parseRect($(id).value);
+    if (v && (v[2] < 0.03 || v[3] < 0.03)) { $(id).value = id === 'stCam' ? '0.70,0.55,0.28,0.40' : '0,0,1,1'; stDraw(); }
+    $(id).dispatchEvent(new Event('change', {bubbles: true})); };
+  w.addEventListener('pointerup', end); w.addEventListener('pointercancel', end);
+})();
+stDraw(); refreshScope();
+
+/* ===== tiempos por etapa y espacio en disco ===== */
+function showTimes(tm) {
+  if (!tm) { $('timesLine').textContent = ''; return; }
+  const parts = Object.entries(tm).filter(([k]) => k !== 'Total').map(([k, v]) => k + ' ' + mmss(v));
+  $('timesLine').textContent = 'Tiempos del análisis → ' + parts.join(' · ') + (tm.Total ? ' · Total ' + mmss(tm.Total) : '');
+}
+const fmtBytes = b => b >= 1e9 ? (b / 1e9).toFixed(1) + ' GB' : Math.round(b / 1e6) + ' MB';
+async function spaceLoad() {
+  try {
+    const s = await (await fetch('/api/storage')).json();
+    $('spJobs').textContent = 'Temporales: ' + fmtBytes(s.jobs);
+    $('spCache').textContent = 'Análisis guardados: ' + fmtBytes(s.cache) + ' (' + s.cache_n + ')';
+    $('spClips').textContent = 'Clips generados: ' + fmtBytes(s.clips) + ' (' + s.clips_n + ')';
+  } catch (e) { $('spMsg').textContent = 'No pude leer el espacio: ' + e; }
+}
+async function spaceClean(what, days, ask) {
+  if (ask && !confirm(ask)) return;
+  const r = await post('/api/storage/clean', {what, days});
+  $('spMsg').textContent = r.error ? r.error : 'Listo: liberé ' + fmtBytes(r.freed || 0) + '.';
+  spaceLoad();
+}
+$('spaceBox').addEventListener('toggle', () => { if ($('spaceBox').open) spaceLoad(); });
+$('spCleanJobs').onclick = () => spaceClean('jobs', 0);
+$('spCleanCache').onclick = () => spaceClean('cache', +$('spCacheDays').value, 'Se borrarán los análisis guardados de más de ' + $('spCacheDays').value + ' días. Volver a analizar esos videos tardará de nuevo. ¿Continuar?');
+$('spCleanClips').onclick = () => spaceClean('clips', +$('spClipDays').value, 'Se borrarán los clips generados de más de ' + $('spClipDays').value + ' días que no hayas guardado en tu carpeta. ¿Continuar?');
+
+/* ===== modo directo continuo ===== */
+let liveSeen = new Set(), liveSince = 0, liveTimer = null;
+function syncLive() {
+  const on = $('isLive').checked && !pcMode;
+  $('liveBox').style.display = on ? '' : 'none'; $('rowFromTo').style.display = on ? 'none' : ''; $('analyze').style.display = on ? 'none' : '';
+}
+$('isLive').addEventListener('change', syncLive); setSrc(pcMode);
+const fmtT = s => { s = Math.floor(s || 0); return Math.floor(s / 3600) ? Math.floor(s / 3600) + ':' + String(Math.floor(s % 3600 / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0') : Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+function updateLiveBar(lv) {
+  const run = lv.phase === 'grabando';
+  $('liveBar').style.display = '';
+  $('liveTxt').innerHTML = (run ? '<span class="dot"></span><b>' + (lv.stopping ? 'Parando…' : 'Grabando') + '</b>' : '<b>' + (lv.phase === 'error' ? 'Se detuvo con un error' : 'Grabación terminada') + '</b>')
+    + (lv.height ? ' en ' + lv.height + 'p' : '') + ` · ${fmtT(lv.rec)}${lv.limit ? ' de ' + fmtT(lv.limit) : ''} · ${lv.gb} GB · bloques analizados: ${lv.blocks} · clips encontrados: ${lv.n}`
+    + (lv.note ? ' · ' + esc(lv.note) : '') + (lv.phase === 'error' ? ' · ' + esc(lv.msg) : '');
+  $('liveStop2').style.display = run ? '' : 'none'; $('liveStop2').disabled = !!lv.stopping;
+  $('liveStop').disabled = !run || !!lv.stopping;
+  $('liveStart').disabled = run;
+}
+function addLiveClips(list) {
+  const fresh = (list || []).filter(c => !liveSeen.has(c.uid)); if (!fresh.length) return;
+  const wasEmpty = !clips.length;
+  fresh.forEach(c => { liveSeen.add(c.uid); clips.push({uid: c.uid, title: c.title || 'Clip', start: r1(+c.start), end: r1(+c.end), score: c.score, reason: c.reason || '', caption: c.caption || '', cam: '', on: true, isNew: true}); });
+  if (wasEmpty) { sel = 0; renderList(); fillClip(); setPvRange(clips[0]); loadSubPhrases(); pvSchedule(100); clips[0].isNew = false; renderList(); }
+  else renderList();
+}
+async function liveTick() {
+  if (!job) return;
+  let r;
+  try { r = await (await fetch(`/api/live/status?job=${job}&since=${liveSince}`)).json(); }
+  catch (e) { liveTimer = setTimeout(liveTick, 4000); return; }
+  if (r.error) return;
+  (r.clips || []).forEach(c => liveSince = Math.max(liveSince, c.uid));
+  srcDur = Math.max(srcDur, r.live.rec);
+  addLiveClips(r.clips);
+  updateLiveBar(r.live);
+  if (r.live.phase === 'grabando') liveTimer = setTimeout(liveTick, 3000);
+  else if (!clips.length) { $('pvMsg').textContent = 'La grabación terminó sin clips que superaran el puntaje mínimo.'; }
+}
+$('liveStart').onclick = async () => {
+  $('liveStart').disabled = true;
+  const r = await post('/api/live/start', {url: $('url').value, context: $('ctxText').value, minutes: +$('liveMin').value, block_min: +$('liveBlock').value, per_block: +$('livePer').value, quality: +$('liveQ').value, min_score: +$('liveScore').value,
+    min: $('min').value, max: $('max').value, flex: $('flex').checked, tags: $('capTags').checked, whisper: $('whisper').value, ai: $('ai').value,
+    model: $('ai').value === 'gemini' ? $('model').value : $('modelOl').value, key: $('key').value, browser: $('browser').value});
+  if (r.error) { $('amsg').className = 'msg err'; $('amsg').textContent = r.error; $('liveStart').disabled = false; return; }
+  clearTimeout(liveTimer); job = r.id; clips = []; sel = 0; srcDur = 0; liveSeen = new Set(); liveSince = 0; pvReady = true; spkOwner = null;
+  $('amsg').className = 'msg'; $('amsg').textContent = 'Grabando. Los clips irán apareciendo en el editor (abajo).';
+  $('candCard').style.display = ''; setStep(2); $('prev').src = '/source/' + job; renderList();
+  $('vBtn').disabled = false; $('vMsg').textContent = 'Pulsa «Detectar voces».'; $('vList').innerHTML = ''; spkInfo = null; spkX = []; pvCam = '';
+  $('pvMsg').style.display = ''; $('pvMsg').textContent = 'Esperando los primeros clips del directo…';
+  $('liveStop').disabled = false; $('liveBar').style.display = '';
+  $('liveTxt').innerHTML = '<span class="dot"></span><b>Conectando…</b>';
+  liveTick();
+};
+const stopLive = async () => {
+  if (!job) return; $('liveStop').disabled = true; $('liveStop2').disabled = true;
+  const r = await post('/api/live/stop', {job}); if (r.error) { $('amsg').className = 'msg err'; $('amsg').textContent = r.error; }
+  clearTimeout(liveTimer); liveTick();
+};
+$('liveStop').onclick = stopLive; $('liveStop2').onclick = stopLive;
+// descartar un clip de la lista (también los que van llegando)
+$('cands').addEventListener('click', e => {
+  const x = e.target.closest('.ccx'); if (!x) return;
+  e.stopPropagation(); e.preventDefault();
+  const i = +x.closest('.cc').dataset.i; clips.splice(i, 1);
+  if (!clips.length) { sel = 0; renderList(); stopPvVideo(); $('pvMsg').style.display = ''; $('pvMsg').textContent = 'No quedan clips en la lista.'; return; }
+  selectClip(Math.min(i < sel ? sel - 1 : sel, clips.length - 1));
+}, true);
+
+/* ===== arrastrar subtítulos, título, logo, insignia y texto sobre la vista previa ===== */
+(() => {
+  const box = $('pvFrameBox'), layer = $('dragLayer');
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const asp = () => { const i = $('pvImg'); return i.naturalWidth && i.naturalHeight ? i.naturalWidth / i.naturalHeight : 9 / 16; };
+  const fire = id => { const e = $(id); e.dispatchEvent(new Event('input', {bubbles: true})); e.dispatchEvent(new Event('change', {bubbles: true})); };
+  const set = (id, v) => { $(id).value = Math.round(v); fire(id); };
+  const setPos = (id, v) => { $(id).value = v; fire(id); };
+  // centro (en % del cuadro) de una posición rápida; el margen es el 4 % del ancho
+  const preset = (pos, wP, hP, bcY) => {
+    const my = 4 * asp();
+    const X = {tl: 4 + wP / 2, bl: 4 + wP / 2, tr: 96 - wP / 2, br: 96 - wP / 2}[pos] ?? 50;
+    const Y = {tl: my + hP / 2, tr: my + hP / 2, bl: 100 - my - hP / 2, br: 100 - my - hP / 2, c: 50, bc: bcY ?? 70 + hP / 2}[pos] ?? 50;
+    return [X, Y];
+  };
+  const logoSize = (id, ratio) => { const w = +$(id).value || 18; return [w, w * asp() / ratio]; };
+  const items = [
+    {name: 'Subtítulos', on: () => $('subOn').checked, size: () => [clamp(+$('swidth').value, 20, 100), 11],
+      get: () => [+$('sposX').value, +$('sposY').value], put: (x, y) => { set('sposX', x); set('sposY', y); }},
+    {name: 'Título', on: () => $('titOn').checked, size: () => [clamp(+$('titW').value * 0.9, 20, 95), 10],
+      get: () => [+$('titX').value, +$('titY').value], put: (x, y) => { set('titX', x); set('titY', y); }},
+    {name: 'Logo', on: () => $('logoOn').checked, size: () => logoSize('lscale', 1),
+      get() { const [w, h] = this.size(); return $('lpos').value === 'custom' ? [+$('lx').value, +$('ly').value] : preset($('lpos').value, w, h); },
+      put: (x, y) => { set('lx', x); set('ly', y); setPos('lpos', 'custom'); }},
+    {name: 'Insignia', on: () => $('badgeOn').checked, size: () => logoSize('badgeScale', 3.2),
+      get() { const [w, h] = this.size(); return $('badgePos').value === 'custom' ? [+$('bx').value, +$('by').value] : preset($('badgePos').value, w, h); },
+      put: (x, y) => { set('bx', x); set('by', y); setPos('badgePos', 'custom'); }},
+    {name: 'Texto', on: () => $('textOn').checked && $('tval').value.trim(), size: () => [clamp($('tval').value.length * 2.4 * (+$('tsize').value || 40) / 40, 12, 80), 6],
+      get() { const [w, h] = this.size(); const p = $('tpos').value; if (p === 'custom') return [+$('tx').value, +$('ty').value]; return preset(p, w, h, 70); },
+      put: (x, y) => { set('tx', x); set('ty', y); setPos('tpos', 'custom'); }}
+  ];
+  const place = (h, x, y, wP, hP) => { h.style.left = (x - wP / 2) + '%'; h.style.top = (y - hP / 2) + '%'; h.style.width = wP + '%'; h.style.height = hP + '%'; };
+  let drag = null;
+  items.forEach(it => {
+    const h = it.el = document.createElement('div'); h.className = 'dragH'; h.innerHTML = '<i></i>'; h.firstChild.textContent = it.name; h.style.display = 'none';
+    layer.appendChild(h);
+    h.addEventListener('pointerdown', e => {
+      const r = box.getBoundingClientRect(), [x, y] = it.get();
+      drag = {it, dx: (e.clientX - r.left) / r.width * 100 - x, dy: (e.clientY - r.top) / r.height * 100 - y};
+      h.setPointerCapture(e.pointerId); h.classList.add('on'); e.preventDefault(); e.stopPropagation();
+    });
+    h.addEventListener('pointermove', e => {
+      if (!drag || drag.it !== it) return;
+      const r = box.getBoundingClientRect(), [wP, hP] = it.size();
+      drag.x = clamp((e.clientX - r.left) / r.width * 100 - drag.dx, wP / 2, 100 - wP / 2);
+      drag.y = clamp((e.clientY - r.top) / r.height * 100 - drag.dy, hP / 2, 100 - hP / 2);
+      place(h, drag.x, drag.y, wP, hP);
+    });
+    const end = () => { if (!drag || drag.it !== it) return; const d = drag; drag = null; h.classList.remove('on'); if (d.x != null) it.put(d.x, d.y); };
+    h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
+  });
+  function sync() {
+    const show = $('pvImg').style.display !== 'none' && $('pvVid').style.display === 'none' && clips[sel];
+    items.forEach(it => {
+      const vis = show && it.on();
+      it.el.style.display = vis ? '' : 'none';
+      if (!vis || (drag && drag.it === it)) return;
+      const [wP, hP] = it.size(), [x, y] = it.get();
+      place(it.el, x, y, wP, hP);
+    });
+  }
+  $('pvImg').addEventListener('load', sync);
+  document.addEventListener('input', () => setTimeout(sync, 0)); document.addEventListener('change', () => setTimeout(sync, 0));
+  setInterval(sync, 700);
+})();
+
+/* ===== perfiles de contexto para la IA ===== */
+let ctxProfiles = [];
+function ctxFill() {
+  const cur = $('ctxSel').value;
+  $('ctxSel').innerHTML = '<option value="">— ninguno —</option>';
+  ctxProfiles.forEach(p => { const o = document.createElement('option'); o.value = p.name; o.textContent = p.name; $('ctxSel').appendChild(o); });
+  $('ctxSel').value = ctxProfiles.some(p => p.name === cur) ? cur : '';
+  $('ctxSum').textContent = 'Contexto para la IA (opcional): el programa y sus participantes' + ($('ctxText').value.trim() ? ' ✓ activo' : '');
+}
+async function ctxLoad() { try { ctxProfiles = (await (await fetch('/api/profiles')).json()).profiles || []; } catch (e) { ctxProfiles = []; } ctxFill(); }
+$('ctxSel').onchange = () => { const p = ctxProfiles.find(x => x.name === $('ctxSel').value); if (p) { $('ctxText').value = p.text; $('ctxText').dispatchEvent(new Event('change')); ctxFill(); } };
+$('ctxText').addEventListener('input', () => { $('ctxSum').textContent = 'Contexto para la IA (opcional): el programa y sus participantes' + ($('ctxText').value.trim() ? ' ✓ activo' : ''); });
+$('ctxSave').onclick = async () => {
+  const name = prompt('Nombre del perfil (por ejemplo, el nombre del programa):', $('ctxSel').value || ''); if (!name) return;
+  const r = await post('/api/profiles', {name, text: $('ctxText').value});
+  if (r.error) { $('ctxMsg').className = 'msg err'; $('ctxMsg').textContent = r.error; return; }
+  ctxProfiles = r.profiles; ctxFill(); $('ctxSel').value = name; $('ctxMsg').className = 'msg'; $('ctxMsg').textContent = 'Perfil guardado.';
+};
+$('ctxDel').onclick = async () => {
+  const n = $('ctxSel').value; if (!n) return; if (!confirm('¿Borrar el perfil «' + n + '»?')) return;
+  const r = await post('/api/profiles/delete', {name: n}); ctxProfiles = r.profiles || []; ctxFill();
+};
+ctxLoad();
+</script>
+</body>
+</html>

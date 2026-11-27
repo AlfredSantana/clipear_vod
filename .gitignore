@@ -1,0 +1,20 @@
+# ---- NUNCA subir esto: contiene videos, tokens de Meta, cookies y datos personales ----
+data/
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.log
+
+# ---- por si acaso ----
+social.json
+cookies.txt
+.env
+*.mp4
+*.mkv
+*.mov
+*.webm
+*.wav
+*.raw
+.DS_Store
+Thumbs.db
